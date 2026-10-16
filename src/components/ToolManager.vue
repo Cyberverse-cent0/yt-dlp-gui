@@ -35,6 +35,7 @@ interface OperationState {
 const { t } = useI18n();
 const settingStore = useSettingStore();
 const statusStore = useStatusStore();
+const platform = ref("");
 
 const tools = computed<ToolDefinition[]>(() => [
   {
@@ -96,6 +97,50 @@ const ytdlpChannelOptions: { label: string; value: YtdlpChannel }[] = [
   { label: "Nightly", value: "nightly" },
   { label: "Master", value: "master" },
 ];
+
+const jsRuntimeOptions = [
+  { label: "Deno", value: "deno" },
+  { label: "Node.js", value: "node" },
+  { label: "Bun", value: "bun" },
+  { label: "QuickJS", value: "quickjs" },
+];
+
+const handleJsRuntimeChange = async (value: (typeof jsRuntimeOptions)[number]["value"]) => {
+  const previous = settingStore.jsRuntime;
+  settingStore.jsRuntime = value;
+  try {
+    await invoke("set_js_runtime", { runtime: value });
+  } catch (e: unknown) {
+    settingStore.jsRuntime = previous;
+    window.$message.error(t("settings.jsRuntimeUpdateFailed", { e }));
+  }
+};
+
+const addFfmpegToPath = async () => {
+  try {
+    const result = await invoke<string>("add_ffmpeg_to_path");
+    window.$message.success(
+      result === "already-present"
+        ? t("settings.ffmpegAlreadyOnPath")
+        : t("settings.ffmpegAddedToPath"),
+    );
+  } catch (e: unknown) {
+    window.$message.error(t("settings.ffmpegPathUpdateFailed", { e }));
+  }
+};
+
+const handleAddFfmpegToPath = async () => {
+  try {
+    const result = await invoke<string>("add_ffmpeg_to_path");
+    if (result === "already_in_path") {
+      window.$message.info(t("settings.ffmpegAlreadyInPath"));
+    } else if (result === "added_to_path") {
+      window.$message.success(t("settings.ffmpegAddedToPath"));
+    }
+  } catch (e: unknown) {
+    window.$message.error(t("settings.ffmpegAddToPathFailed", { e }));
+  }
+};
 
 const getSource = (tool: ToolKey): SelectableToolSource => {
   if (tool === "yt-dlp") return settingStore.ytdlpSource;
@@ -324,6 +369,7 @@ const copyToolValue = async (label: string, value: string) => {
 let unlistenProgress: (() => void) | null = null;
 
 onMounted(async () => {
+  platform.value = await invoke<string>("get_platform");
   unlistenProgress = await listen<ToolOperationProgress>("tool-operation-progress", (event) => {
     const payload = event.payload;
     const state = operations[payload.tool];
@@ -348,6 +394,17 @@ onUnmounted(() => unlistenProgress?.());
         {{ $t("common.refresh") }}
       </n-button>
     </template>
+
+    <div class="runtime-row">
+      <n-text depth="3">{{ $t("settings.jsRuntime") }}</n-text>
+      <n-select
+        :value="settingStore.jsRuntime"
+        :options="jsRuntimeOptions"
+        size="small"
+        class="runtime-select"
+        @update:value="handleJsRuntimeChange"
+      />
+    </div>
 
     <div class="tool-list">
       <n-spin
@@ -424,6 +481,17 @@ onUnmounted(() => unlistenProgress?.());
           </n-flex>
           <n-text depth="3" class="tool-description">{{ tool.description }}</n-text>
 
+          <n-button
+            v-if="tool.key === 'ffmpeg' && platform === 'windows' && statuses.ffmpeg?.installed"
+            size="small"
+            secondary
+            class="path-action"
+            :disabled="checking.ffmpeg || operations.ffmpeg.active"
+            @click="addFfmpegToPath"
+          >
+            {{ $t("settings.addToPath") }}
+          </n-button>
+
           <div v-if="tool.key === 'yt-dlp'" class="channel-row">
             <n-text depth="3" class="channel-label">
               {{ $t("settings.ytdlpChannel") }}
@@ -440,6 +508,17 @@ onUnmounted(() => unlistenProgress?.());
               class="channel-select"
               @update:value="(value: YtdlpChannel) => handleChannelChange(value)"
             />
+          </div>
+
+          <div v-if="tool.key === 'ffmpeg'" class="channel-row">
+            <n-button
+              size="small"
+              secondary
+              :disabled="!statuses[tool.key]?.installed"
+              @click="handleAddFfmpegToPath"
+            >
+              {{ $t("settings.addFfmpegToPath") }}
+            </n-button>
           </div>
 
           <dl class="tool-meta">
@@ -545,6 +624,18 @@ onUnmounted(() => unlistenProgress?.());
   flex-direction: column;
 }
 
+.runtime-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.runtime-select {
+  width: 180px;
+}
+
 .tool-row {
   padding: 12px 0;
 
@@ -585,6 +676,11 @@ onUnmounted(() => unlistenProgress?.());
   margin-top: 2px;
   font-size: 13px;
   text-wrap: pretty;
+}
+
+.path-action {
+  align-self: flex-start;
+  margin-top: 8px;
 }
 
 .channel-row {

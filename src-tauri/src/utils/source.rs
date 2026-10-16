@@ -26,11 +26,50 @@ impl ToolSource {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum JsRuntime {
+    Deno,
+    Node,
+    Bun,
+    QuickJs,
+}
+
+impl JsRuntime {
+    fn parse(value: &str) -> Result<Self, String> {
+        match value {
+            "deno" => Ok(Self::Deno),
+            "node" => Ok(Self::Node),
+            "bun" => Ok(Self::Bun),
+            "quickjs" => Ok(Self::QuickJs),
+            _ => Err(format!("err_invalid_js_runtime:{}", value)),
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Deno => "deno",
+            Self::Node => "node",
+            Self::Bun => "bun",
+            Self::QuickJs => "quickjs",
+        }
+    }
+
+    pub fn executable(self) -> &'static str {
+        match self {
+            Self::Deno => "deno",
+            Self::Node => "node",
+            Self::Bun => "bun",
+            Self::QuickJs => "qjs",
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 struct ToolSources {
     ytdlp: ToolSource,
     deno: ToolSource,
     ffmpeg: ToolSource,
+    js_runtime: JsRuntime,
 }
 
 impl Default for ToolSources {
@@ -39,6 +78,7 @@ impl Default for ToolSources {
             ytdlp: ToolSource::Managed,
             deno: ToolSource::Managed,
             ffmpeg: ToolSource::System,
+            js_runtime: JsRuntime::Deno,
         }
     }
 }
@@ -51,16 +91,32 @@ fn tool_sources_lock() -> &'static RwLock<ToolSources> {
 }
 
 pub fn set_tool_sources(ytdlp: &str, deno: &str, ffmpeg: &str) -> Result<(), String> {
-    let sources = ToolSources {
-        ytdlp: ToolSource::parse(ytdlp)?,
-        deno: ToolSource::parse(deno)?,
-        ffmpeg: ToolSource::parse(ffmpeg)?,
-    };
+    let ytdlp = ToolSource::parse(ytdlp)?;
+    let deno = ToolSource::parse(deno)?;
+    let ffmpeg = ToolSource::parse(ffmpeg)?;
     let mut guard = tool_sources_lock()
         .write()
         .map_err(|e| format!("err_set_tool_sources:{}", e))?;
-    *guard = sources;
+    guard.ytdlp = ytdlp;
+    guard.deno = deno;
+    guard.ffmpeg = ffmpeg;
     Ok(())
+}
+
+pub fn set_js_runtime(runtime: &str) -> Result<(), String> {
+    let runtime = JsRuntime::parse(runtime)?;
+    let mut guard = tool_sources_lock()
+        .write()
+        .map_err(|e| format!("err_set_js_runtime:{}", e))?;
+    guard.js_runtime = runtime;
+    Ok(())
+}
+
+pub fn get_js_runtime() -> Result<JsRuntime, String> {
+    let guard = tool_sources_lock()
+        .read()
+        .map_err(|e| format!("err_get_tool_sources:{}", e))?;
+    Ok(guard.js_runtime)
 }
 
 pub fn get_tool_source(tool: &str) -> Result<ToolSource, String> {

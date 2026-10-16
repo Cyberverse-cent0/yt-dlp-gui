@@ -35,6 +35,9 @@ export const useAppBootstrap = () => {
   const applyYtdlpChannel = (): Promise<unknown> =>
     invoke("set_ytdlp_channel", { channel: settingStore.ytdlpChannel }).catch(() => {});
 
+  const applyJsRuntime = (): Promise<unknown> =>
+    invoke("set_js_runtime", { runtime: settingStore.jsRuntime }).catch(() => {});
+
   /**
    * 检查应用是否有新版本可用，有更新时自动弹出模态框
    *
@@ -69,8 +72,14 @@ export const useAppBootstrap = () => {
       () => applyYtdlpChannel(),
     );
 
+    watch(
+      () => settingStore.jsRuntime,
+      () => applyJsRuntime(),
+    );
+
     await applyToolSources();
     await applyYtdlpChannel();
+    await applyJsRuntime();
 
     if (settingStore.autoCheckUpdate) {
       void checkAppUpdate();
@@ -81,6 +90,7 @@ export const useAppBootstrap = () => {
     bootstrap,
     applyToolSources,
     applyYtdlpChannel,
+    applyJsRuntime,
     checkAppUpdate,
   };
 };

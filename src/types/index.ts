@@ -153,6 +153,7 @@ export interface DownloadTaskParams {
   downloadMode: string;
   videoFormat: string | null;
   audioFormat: string | null;
+  audioFormats: string[] | null;
   cookieFile: string | null;
   cookieBrowser: string | null;
   proxy: string | null;
@@ -181,6 +182,8 @@ export interface DownloadTaskParams {
   playlistItems: string | null;
   /** 从开始下载直播流 */
   liveFromStart: boolean;
+  /** 临时文件夹路径 */
+  tempDir: string | null;
 }
 
 export interface DownloadTask {
@@ -226,6 +229,7 @@ export interface PendingItem extends FetchedVideoData {
   downloadMode: "default" | "video" | "audio";
   selectedVideoFormat: string;
   selectedAudioFormat: string;
+  selectedAudioFormats: string[];
   startTime: number | null;
   endTime: number | null;
   embedSubs: boolean;
