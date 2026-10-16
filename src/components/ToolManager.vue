@@ -98,7 +98,9 @@ const ytdlpChannelOptions: { label: string; value: YtdlpChannel }[] = [
   { label: "Master", value: "master" },
 ];
 
-const jsRuntimeOptions = [
+type JsRuntimeOptionValue = "deno" | "node" | "bun" | "quickjs";
+
+const jsRuntimeOptions: { label: string; value: JsRuntimeOptionValue }[] = [
   { label: "Deno", value: "deno" },
   { label: "Node.js", value: "node" },
   { label: "Bun", value: "bun" },
@@ -116,25 +118,12 @@ const handleJsRuntimeChange = async (value: (typeof jsRuntimeOptions)[number]["v
   }
 };
 
-const addFfmpegToPath = async () => {
-  try {
-    const result = await invoke<string>("add_ffmpeg_to_path");
-    window.$message.success(
-      result === "already-present"
-        ? t("settings.ffmpegAlreadyOnPath")
-        : t("settings.ffmpegAddedToPath"),
-    );
-  } catch (e: unknown) {
-    window.$message.error(t("settings.ffmpegPathUpdateFailed", { e }));
-  }
-};
-
 const handleAddFfmpegToPath = async () => {
   try {
     const result = await invoke<string>("add_ffmpeg_to_path");
-    if (result === "already_in_path") {
+    if (result === "already-present") {
       window.$message.info(t("settings.ffmpegAlreadyInPath"));
-    } else if (result === "added_to_path") {
+    } else if (result === "added") {
       window.$message.success(t("settings.ffmpegAddedToPath"));
     }
   } catch (e: unknown) {
@@ -481,17 +470,6 @@ onUnmounted(() => unlistenProgress?.());
           </n-flex>
           <n-text depth="3" class="tool-description">{{ tool.description }}</n-text>
 
-          <n-button
-            v-if="tool.key === 'ffmpeg' && platform === 'windows' && statuses.ffmpeg?.installed"
-            size="small"
-            secondary
-            class="path-action"
-            :disabled="checking.ffmpeg || operations.ffmpeg.active"
-            @click="addFfmpegToPath"
-          >
-            {{ $t("settings.addToPath") }}
-          </n-button>
-
           <div v-if="tool.key === 'yt-dlp'" class="channel-row">
             <n-text depth="3" class="channel-label">
               {{ $t("settings.ytdlpChannel") }}
@@ -510,11 +488,11 @@ onUnmounted(() => unlistenProgress?.());
             />
           </div>
 
-          <div v-if="tool.key === 'ffmpeg'" class="channel-row">
+          <div v-if="tool.key === 'ffmpeg' && platform === 'windows'" class="channel-row">
             <n-button
               size="small"
               secondary
-              :disabled="!statuses[tool.key]?.installed"
+              :disabled="!statuses[tool.key]?.installed || operations.ffmpeg.active"
               @click="handleAddFfmpegToPath"
             >
               {{ $t("settings.addFfmpegToPath") }}
@@ -676,11 +654,6 @@ onUnmounted(() => unlistenProgress?.());
   margin-top: 2px;
   font-size: 13px;
   text-wrap: pretty;
-}
-
-.path-action {
-  align-self: flex-start;
-  margin-top: 8px;
 }
 
 .channel-row {
