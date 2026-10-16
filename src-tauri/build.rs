@@ -1,4 +1,7 @@
 fn main() {
+    println!("cargo::rustc-check-cfg=cfg(mobile)");
+    tauri_build::build();
+
     #[cfg(feature = "prebuilt-ytdlp")]
     {
         println!("cargo:rerun-if-changed=build.rs");
@@ -60,6 +63,4 @@ fn main() {
             prebuilt_path.display()
         );
     }
-
-    tauri_build::build();
 }

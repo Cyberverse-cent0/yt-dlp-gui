@@ -143,6 +143,9 @@
   "downloadDir": {
     "title": "Download Directory",
     "notSet": "Download directory not set",
-    "selectDir": "Select Download Directory"
+    "selectDir": "Select Download Directory",
+    "autoDetect": "Auto-detect",
+    "autoDetectSuccess": "Default download directory detected successfully",
+    "autoDetectFailed": "Failed to detect default download directory: {e}"
   }
 }

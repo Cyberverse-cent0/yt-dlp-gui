@@ -96,6 +96,7 @@ pub fn run() {
             app::commands::take_cli_open_request,
             app::browser_bridge::take_browser_extension_imports,
             commands::get_platform,
+            commands::get_default_download_dir,
             commands::set_tool_sources,
             commands::set_js_runtime,
             commands::set_youtube_extractor_args,

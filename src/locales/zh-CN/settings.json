@@ -143,6 +143,9 @@
   "downloadDir": {
     "title": "下载目录",
     "notSet": "未设置下载目录",
-    "selectDir": "选择下载目录"
+    "selectDir": "选择下载目录",
+    "autoDetect": "自动检测",
+    "autoDetectSuccess": "已成功检测默认下载目录",
+    "autoDetectFailed": "检测默认下载目录失败：{e}"
   }
 }
