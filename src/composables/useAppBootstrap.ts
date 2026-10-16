@@ -74,6 +74,18 @@ export const useAppBootstrap = () => {
   };
 
   /**
+   * 初始化下载任务列表和事件监听
+   *
+   * @returns Promise<void>
+   */
+  const initializeDownloadStore = async (): Promise<void> => {
+    const { useDownloadStore } = await import("@/stores/download");
+    const downloadStore = useDownloadStore();
+    await downloadStore.loadTasks();
+    await downloadStore.setupListeners();
+  };
+
+  /**
    * 执行完整的应用启动引导任务
    *
    * @returns Promise<void>
@@ -103,6 +115,7 @@ export const useAppBootstrap = () => {
     await applyYtdlpChannel();
     await applyJsRuntime();
     await autoDetectDownloadDir();
+    await initializeDownloadStore();
 
     if (settingStore.autoCheckUpdate) {
       void checkAppUpdate();
@@ -116,5 +129,6 @@ export const useAppBootstrap = () => {
     applyJsRuntime,
     checkAppUpdate,
     autoDetectDownloadDir,
+    initializeDownloadStore,
   };
 };
