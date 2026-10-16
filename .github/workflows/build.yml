@@ -80,7 +80,7 @@ jobs:
               cd "$bundle_dir"
               "./$image_name" --appimage-extract
             )
-            find "$bundle_dir/squashfs-root" -type f -name 'libwayland-*.so*' -delete
+            find "$bundle_dir/squashfs-root" -name 'libwayland-*.so*' -delete
             APPIMAGE_EXTRACT_AND_RUN=1 "$RUNNER_TEMP/appimagetool" "$bundle_dir/squashfs-root" "$RUNNER_TEMP/$image_name"
             mv "$RUNNER_TEMP/$image_name" "$image"
             rm -rf "$bundle_dir/squashfs-root"

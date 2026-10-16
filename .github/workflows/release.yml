@@ -116,11 +116,26 @@ jobs:
               cd "$bundle_dir"
               "./$image_name" --appimage-extract
             )
-            find "$bundle_dir/squashfs-root" -type f -name 'libwayland-*.so*' -delete
+            find "$bundle_dir/squashfs-root" -name 'libwayland-*.so*' -delete
             APPIMAGE_EXTRACT_AND_RUN=1 "$RUNNER_TEMP/appimagetool" "$bundle_dir/squashfs-root" "$RUNNER_TEMP/$image_name"
             mv "$RUNNER_TEMP/$image_name" "$image"
             rm -rf "$bundle_dir/squashfs-root"
           done
+
+      - name: Verify macOS code signature
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${APPLE_CERTIFICATE:-}" ]]; then
+            echo "Apple certificate not configured; skipping signature verification"
+            exit 0
+          fi
+          app_path="$(find "src-tauri/target/${{ matrix.target }}/release/bundle/macos" -maxdepth 1 -type d -name '*.app' -print -quit)"
+          test -n "$app_path"
+          codesign --verify --deep --strict --verbose=2 "$app_path"
 
       - name: Upload artifacts (Windows)
         if: matrix.platform == 'windows-latest'
