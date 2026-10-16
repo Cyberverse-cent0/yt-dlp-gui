@@ -35,10 +35,11 @@ export interface ToolUpdateCheck {
 
 export type YtdlpStatus = ToolStatus;
 export type DenoStatus = ToolStatus;
+export type BunStatus = ToolStatus;
 export type FfmpegStatus = ToolStatus;
 
 export interface ToolOperationProgress {
-  tool: "yt-dlp" | "deno" | "ffmpeg";
+  tool: "yt-dlp" | "deno" | "bun" | "ffmpeg";
   operation: "install" | "update";
   stage: "downloading" | "installing" | "updating" | "complete";
   percent: number | null;
