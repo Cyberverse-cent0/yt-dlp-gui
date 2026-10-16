@@ -137,6 +137,7 @@ export const useSettingStore = defineStore(
     /** 每个外部工具独立选择应用管理版本或系统 PATH 版本 */
     const ytdlpSource = ref<"managed" | "system">("managed");
     const denoSource = ref<"managed" | "system">("managed");
+    const bunSource = ref<"managed" | "system">("system");
     const ffmpegSource = ref<"managed" | "system">("system");
 
     /** JavaScript runtime used by yt-dlp for supported extractors */
@@ -211,6 +212,7 @@ export const useSettingStore = defineStore(
       autoCheckUpdate,
       ytdlpSource,
       denoSource,
+      bunSource,
       ffmpegSource,
       jsRuntime,
       ytdlpChannel,

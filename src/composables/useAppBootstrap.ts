@@ -24,6 +24,7 @@ export const useAppBootstrap = () => {
     invoke("set_tool_sources", {
       ytdlp: settingStore.ytdlpSource,
       deno: settingStore.denoSource,
+      bun: settingStore.bunSource,
       ffmpeg: settingStore.ffmpegSource,
     });
 
@@ -63,7 +64,12 @@ export const useAppBootstrap = () => {
    */
   const bootstrap = async (): Promise<void> => {
     watch(
-      () => [settingStore.ytdlpSource, settingStore.denoSource, settingStore.ffmpegSource],
+      () => [
+        settingStore.ytdlpSource,
+        settingStore.denoSource,
+        settingStore.bunSource,
+        settingStore.ffmpegSource,
+      ],
       () => applyToolSources(),
     );
 

@@ -3,7 +3,9 @@
 use tauri::AppHandle;
 use std::process::Command;
 
-use super::paths::{get_deno_path, get_ffmpeg_path, get_managed_deno_path, get_plugin_dir};
+use super::paths::{
+    get_bun_path, get_deno_path, get_ffmpeg_path, get_managed_deno_path, get_plugin_dir,
+};
 
 /// 将当前选择的 FFmpeg 目录显式交给 yt-dlp，解决 GUI 进程 PATH 不完整的问题。
 /// 如果 FFmpeg 不存在，返回空 vec 而非静默失败，由调用方决定是否报错。
@@ -69,13 +71,15 @@ pub fn build_js_runtime_args(app: &AppHandle) -> Vec<String> {
         Ok(runtime) => runtime,
         Err(_) => return vec![],
     };
-    let runtime_path = if runtime == super::source::JsRuntime::Deno {
-        get_deno_path(app)
+    let runtime_path = match runtime {
+        super::source::JsRuntime::Deno => get_deno_path(app)
             .ok()
             .filter(|path| path.is_file())
-            .or_else(|| get_managed_deno_path(app).ok().filter(|path| path.is_file()))
-    } else {
-        which::which(runtime.executable()).ok().filter(|path| path.is_file())
+            .or_else(|| get_managed_deno_path(app).ok().filter(|path| path.is_file())),
+        super::source::JsRuntime::Bun => {
+            get_bun_path(app).ok().filter(|path| path.is_file())
+        }
+        _ => which::which(runtime.executable()).ok().filter(|path| path.is_file()),
     };
     if let Some(runtime_path) = runtime_path {
         return vec![

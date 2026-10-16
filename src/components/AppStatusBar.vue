@@ -83,6 +83,7 @@ const refreshStatuses = async () => {
   await invoke("set_tool_sources", {
     ytdlp: settingStore.ytdlpSource,
     deno: settingStore.denoSource,
+    bun: settingStore.bunSource,
     ffmpeg: settingStore.ffmpegSource,
   });
   await invoke("set_ytdlp_channel", { channel: settingStore.ytdlpChannel }).catch(() => {});

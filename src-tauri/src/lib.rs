@@ -17,6 +17,9 @@ pub fn run() {
     if let Some(path) = initial_cli.deno_path.clone() {
         let _ = utils::set_cli_tool_path("deno", path);
     }
+    if let Some(path) = initial_cli.bun_path.clone() {
+        let _ = utils::set_cli_tool_path("bun", path);
+    }
     let initial_request = (!initial_cli.request.is_empty()).then_some(initial_cli.request);
 
     tauri::Builder::default()
@@ -28,6 +31,9 @@ pub fn run() {
             }
             if let Some(path) = cli_options.deno_path {
                 let _ = utils::set_cli_tool_path("deno", path);
+            }
+            if let Some(path) = cli_options.bun_path {
+                let _ = utils::set_cli_tool_path("bun", path);
             }
             if !cli_options.request.is_empty() {
                 let _ = app.emit("cli-open-request", cli_options.request);
@@ -102,6 +108,9 @@ pub fn run() {
             commands::get_deno_status,
             commands::download_deno,
             commands::update_deno,
+            commands::get_bun_status,
+            commands::download_bun,
+            commands::update_bun,
             commands::get_ffmpeg_status,
             commands::download_ffmpeg,
             commands::update_ffmpeg,
