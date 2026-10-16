@@ -98,7 +98,9 @@ const ytdlpChannelOptions: { label: string; value: YtdlpChannel }[] = [
   { label: "Master", value: "master" },
 ];
 
-const jsRuntimeOptions = [
+type JsRuntimeOptionValue = "deno" | "node" | "bun" | "quickjs";
+
+const jsRuntimeOptions: { label: string; value: JsRuntimeOptionValue }[] = [
   { label: "Deno", value: "deno" },
   { label: "Node.js", value: "node" },
   { label: "Bun", value: "bun" },
