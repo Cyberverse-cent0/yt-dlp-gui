@@ -7,7 +7,8 @@ import { useStatusStore } from "@/stores/status";
  * 封装应用启动引导与底层服务同步逻辑的 Composable：
  * 1. CLI 工具源设置同步（managed / system / custom）
  * 2. yt-dlp 分支通道同步（stable / nightly / master）
- * 3. 应用自动更新检查
+ * 3. 下载目录自动检测（首次启动或目录为空时）
+ * 4. 应用自动更新检查
  *
  * @returns 包含启动方法与各个同步操作的对象
  */
@@ -58,6 +59,21 @@ export const useAppBootstrap = () => {
   };
 
   /**
+   * 自动检测并设置默认下载目录（仅在首次启动或目录为空时）
+   *
+   * @returns Promise<void>
+   */
+  const autoDetectDownloadDir = async (): Promise<void> => {
+    if (settingStore.downloadDir) return;
+    try {
+      const defaultDir = await invoke<string>("get_default_download_dir");
+      settingStore.downloadDir = defaultDir;
+    } catch {
+      // 静默失败，用户可以手动设置
+    }
+  };
+
+  /**
    * 执行完整的应用启动引导任务
    *
    * @returns Promise<void>
@@ -86,6 +102,7 @@ export const useAppBootstrap = () => {
     await applyToolSources();
     await applyYtdlpChannel();
     await applyJsRuntime();
+    await autoDetectDownloadDir();
 
     if (settingStore.autoCheckUpdate) {
       void checkAppUpdate();
@@ -98,5 +115,6 @@ export const useAppBootstrap = () => {
     applyYtdlpChannel,
     applyJsRuntime,
     checkAppUpdate,
+    autoDetectDownloadDir,
   };
 };

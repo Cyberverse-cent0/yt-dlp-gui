@@ -22,7 +22,7 @@ Located in `src-tauri/src/commands/system.rs`:
 
 ```rust
 #[tauri::command]
-pub fn get_default_download_dir(_app: AppHandle) -> Result<String, String> {
+pub fn get_default_download_dir(app: AppHandle) -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
         use std::path::PathBuf;
@@ -36,6 +36,7 @@ pub fn get_default_download_dir(_app: AppHandle) -> Result<String, String> {
     #[cfg(target_os = "macos")]
     {
         use std::path::PathBuf;
+        let _ = app;
         let home = std::env::var("HOME").map_err(|e| format!("Failed to get HOME: {}", e))?;
         let downloads = PathBuf::from(home).join("Downloads");
         Ok(downloads.to_string_lossy().to_string())
@@ -44,6 +45,7 @@ pub fn get_default_download_dir(_app: AppHandle) -> Result<String, String> {
     #[cfg(target_os = "linux")]
     {
         use std::path::PathBuf;
+        let _ = app;
         // Try XDG_DOWNLOAD_DIR first
         if let Ok(xdg) = std::env::var("XDG_DOWNLOAD_DIR") {
             return Ok(xdg);
@@ -53,23 +55,46 @@ pub fn get_default_download_dir(_app: AppHandle) -> Result<String, String> {
         let downloads = PathBuf::from(home).join("Downloads");
         Ok(downloads.to_string_lossy().to_string())
     }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+    {
+        let _ = app;
+        Err("Unsupported platform".to_string())
+    }
 }
 ```
 
-#### Frontend (Vue)
+#### Frontend Integration
 
-The feature is integrated in two places:
+The auto-detect is automatically called during app bootstrap in `src/composables/useAppBootstrap.ts`:
 
-1. **DownloadDirCard.vue**: Manual auto-detect button
-2. **Home.vue**: Automatic detection when download directory is not set
+```typescript
+const autoDetectDownloadDir = async (): Promise<void> => {
+  if (settingStore.downloadDir) return;
+  try {
+    const defaultDir = await invoke<string>("get_default_download_dir");
+    settingStore.downloadDir = defaultDir;
+  } catch {
+    // 静默失败，用户可以手动设置
+  }
+};
+```
 
-##### DownloadDirCard.vue
+This is invoked in the `bootstrap()` function, which runs on app startup:
 
-```vue
-<script setup lang="ts">
-import { invoke } from "@tauri-apps/api/core";
+```typescript
+const bootstrap = async (): Promise<void> => {
+  // ... other setup
+  await autoDetectDownloadDir();
+  // ... other setup
+};
+```
 
-/** 自动检测默认下载目录 */
+### Manual Auto-Detect
+
+Users can also manually trigger auto-detect from the download directory settings card in `src/components/DownloadDirCard.vue`:
+
+```typescript
 const handleAutoDetect = async () => {
   try {
     const defaultDir = await invoke<string>("get_default_download_dir");
@@ -79,28 +104,13 @@ const handleAutoDetect = async () => {
     window.$message.error(t("downloadDir.autoDetectFailed", { e }));
   }
 };
-</script>
-
-<template>
-  <n-button size="small" @click="handleAutoDetect">
-    <template #icon>
-      <n-icon>
-        <icon-mdi-folder-heart-outline />
-      </n-icon>
-    </template>
-    {{ $t("downloadDir.autoDetect") }}
-  </n-button>
-</template>
 ```
 
-##### Home.vue (Automatic Detection)
+### Quick Download Mode
 
-```vue
-<script setup lang="ts">
-/**
- * 校验快速下载模式所需配置（如下载路径是否已设置）
- * 如果未设置，自动检测并提示用户
- */
+When using quick download mode without a configured download directory, the system automatically attempts to detect the default download directory in `src/pages/Home.vue`:
+
+```typescript
 const ensureQuickDownloadConfigured = async (): Promise<boolean> => {
   if (settingStore.homeDownloadBehavior !== "quick" || settingStore.downloadDir) return true;
 
@@ -116,74 +126,55 @@ const ensureQuickDownloadConfigured = async (): Promise<boolean> => {
     return false;
   }
 };
-</script>
 ```
 
-## Usage
+## Behavior
 
-### Manual Auto-Detect
-
-1. Go to Settings → Download Directory
-2. Click the "Auto-detect" button (folder heart icon)
-3. The application will automatically detect and set your platform's default Downloads folder
-
-### Automatic Detection
-
-When using Quick Download mode:
-- If no download directory is set, the app will automatically detect the default Downloads folder
-- If detection succeeds, the directory is set automatically
-- If detection fails, the user is prompted to manually select a directory
+1. **First Launch**: On first launch, if no download directory is configured, the app automatically detects and sets the platform's default Downloads folder
+2. **Subsequent Launches**: If a download directory is already configured, the auto-detect is skipped
+3. **Manual Override**: Users can manually change the download directory at any time via the settings page
+4. **Silent Failure**: If auto-detect fails (e.g., unsupported platform or permission issues), the app continues to function and users can manually set the directory
 
 ## Localization
 
-The feature includes localization support:
+The feature includes localization strings in both English and Chinese:
 
-### English (en-US)
+**English (`src/locales/en-US/settings.json`)**:
 ```json
 {
   "downloadDir": {
-    "autoDetect": "Auto-detect",
-    "autoDetectSuccess": "Default download directory detected successfully",
-    "autoDetectFailed": "Failed to detect default download directory: {e}"
+    "title": "Download Directory",
+    "autoDetect": "Auto Detect",
+    "autoDetectSuccess": "Download directory auto-detected successfully",
+    "autoDetectFailed": "Failed to auto-detect download directory: {e}"
   }
 }
 ```
 
-### Chinese (zh-CN)
+**Chinese (`src/locales/zh-CN/settings.json`)**:
 ```json
 {
   "downloadDir": {
+    "title": "下载目录",
     "autoDetect": "自动检测",
-    "autoDetectSuccess": "已成功检测默认下载目录",
-    "autoDetectFailed": "检测默认下载目录失败：{e}"
+    "autoDetectSuccess": "下载目录自动检测成功",
+    "autoDetectFailed": "自动检测下载目录失败：{e}"
   }
 }
 ```
 
 ## Testing
 
-### Windows
-- Default: `%USERPROFILE%\Downloads`
-- Uses Tauri's built-in `download_dir()` API
+To test the auto-detect feature:
 
-### macOS
-- Default: `$HOME/Downloads`
-- Falls back to user home directory
+1. Clear the download directory setting (either by clearing localStorage or using the settings UI)
+2. Restart the application
+3. Verify that the download directory is set to the platform's default Downloads folder
+4. Test on different platforms (Windows, macOS, Linux) to ensure platform-specific behavior
 
-### Linux
-- Default: `$HOME/Downloads` or `XDG_DOWNLOAD_DIR` if set
-- Respects XDG Base Directory specification
+## Troubleshooting
 
-## Error Handling
-
-The feature includes comprehensive error handling:
-- Windows: API failure messages
-- macOS/Linux: HOME environment variable not set
-- All platforms: Graceful fallback to manual selection
-
-## Future Enhancements
-
-Potential improvements:
-- Support for custom platform-specific paths (e.g., `$HOME/Рабочий стол` on Russian systems)
-- Detection of multiple download locations (e.g., secondary drives)
-- User preference for auto-detect on first launch
+- **Windows**: Ensure the app has permission to access the Downloads folder
+- **Linux**: Check that `XDG_DOWNLOAD_DIR` is set correctly in `~/.config/user-dirs.dirs` if using a custom download location
+- **macOS**: Verify that the HOME environment variable is set correctly
+- **Permissions**: On some systems, the app may need additional permissions to access user directories
