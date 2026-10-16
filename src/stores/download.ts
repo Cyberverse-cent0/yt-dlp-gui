@@ -247,7 +247,7 @@ export const useDownloadStore = defineStore("download", () => {
           // 后端只落了状态/产物，内存里的 total/清空后的 logs 需要同步回库
           void updateTask(task);
         }
-        await updateTaskbarProgress();
+        void updateTaskbarProgress();
         tryStartNext();
       },
     );
@@ -262,7 +262,7 @@ export const useDownloadStore = defineStore("download", () => {
         // 错误诊断依赖日志，保留裁剪后的 logs 并落库
         void updateTask(task);
       }
-      await updateTaskbarProgress();
+      void updateTaskbarProgress();
       tryStartNext();
     });
   };
