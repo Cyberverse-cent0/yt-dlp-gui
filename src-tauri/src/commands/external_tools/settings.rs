@@ -14,10 +14,10 @@ pub fn get_platform() -> String {
     }
 }
 
-/// 设置三个外部工具各自的来源；选择是严格的，不再隐式回退到另一来源。
+/// 设置四个外部工具各自的来源；选择是严格的，不再隐式回退到另一来源。
 #[tauri::command]
-pub fn set_tool_sources(ytdlp: String, deno: String, ffmpeg: String) -> Result<(), String> {
-    utils::set_tool_sources(&ytdlp, &deno, &ffmpeg)
+pub fn set_tool_sources(ytdlp: String, deno: String, bun: String, ffmpeg: String) -> Result<(), String> {
+    utils::set_tool_sources(&ytdlp, &deno, &bun, &ffmpeg)
 }
 
 #[tauri::command]

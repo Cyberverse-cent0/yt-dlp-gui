@@ -13,7 +13,7 @@ import type {
   YtdlpChannel,
 } from "@/types";
 
-type ToolKey = "yt-dlp" | "deno" | "ffmpeg";
+type ToolKey = "yt-dlp" | "deno" | "bun" | "ffmpeg";
 type SelectableToolSource = Exclude<ToolSource, "custom">;
 
 interface ToolDefinition {
@@ -55,6 +55,14 @@ const tools = computed<ToolDefinition[]>(() => [
     updateCommand: "update_deno",
   },
   {
+    key: "bun",
+    title: t("settings.bunTitle"),
+    description: t("settings.bunDesc"),
+    statusCommand: "get_bun_status",
+    installCommand: "download_bun",
+    updateCommand: "update_bun",
+  },
+  {
     key: "ffmpeg",
     title: "FFmpeg + FFprobe",
     description: t("settings.ffmpegDesc"),
@@ -67,22 +75,26 @@ const tools = computed<ToolDefinition[]>(() => [
 const statuses = reactive<Record<ToolKey, ToolStatus | null>>({
   "yt-dlp": null,
   deno: null,
+  bun: null,
   ffmpeg: null,
 });
 const checking = reactive<Record<ToolKey, boolean>>({
   "yt-dlp": true,
   deno: true,
+  bun: true,
   ffmpeg: true,
 });
 const refreshing = ref(false);
 const checkingUpdates = reactive<Record<ToolKey, boolean>>({
   "yt-dlp": false,
   deno: false,
+  bun: false,
   ffmpeg: false,
 });
 const operations = reactive<Record<ToolKey, OperationState>>({
   "yt-dlp": { active: false, operation: "install", stage: "downloading", percent: null },
   deno: { active: false, operation: "install", stage: "downloading", percent: null },
+  bun: { active: false, operation: "install", stage: "downloading", percent: null },
   ffmpeg: { active: false, operation: "install", stage: "downloading", percent: null },
 });
 
@@ -134,12 +146,14 @@ const handleAddFfmpegToPath = async () => {
 const getSource = (tool: ToolKey): SelectableToolSource => {
   if (tool === "yt-dlp") return settingStore.ytdlpSource;
   if (tool === "deno") return settingStore.denoSource;
+  if (tool === "bun") return settingStore.bunSource;
   return settingStore.ffmpegSource;
 };
 
 const setSource = (tool: ToolKey, value: SelectableToolSource) => {
   if (tool === "yt-dlp") settingStore.ytdlpSource = value;
   else if (tool === "deno") settingStore.denoSource = value;
+  else if (tool === "bun") settingStore.bunSource = value;
   else settingStore.ffmpegSource = value;
 };
 
@@ -147,6 +161,7 @@ const applySources = () =>
   invoke("set_tool_sources", {
     ytdlp: settingStore.ytdlpSource,
     deno: settingStore.denoSource,
+    bun: settingStore.bunSource,
     ffmpeg: settingStore.ffmpegSource,
   });
 
