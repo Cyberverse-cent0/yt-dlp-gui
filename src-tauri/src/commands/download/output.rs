@@ -236,6 +236,71 @@ pub(super) fn spawn_completion_handler(
                 }),
             );
         } else {
+            // 「Requested format is not available」兜底：所选格式对该视频不可用时
+            // （典型场景：播放列表条目沿用了首个 entry 的格式 ID、或格式列表已过期），
+            // 去掉 -f/--audio-multistreams 用 yt-dlp 默认格式自动重试一次。
+            let retry_args = processes.lock().ok().and_then(|mut map| {
+                map.get_mut(&task_id).and_then(|info| {
+                    let format_unavailable = info
+                        .last_error
+                        .as_deref()
+                        .is_some_and(|e| e.contains("Requested format is not available"));
+                    if format_unavailable {
+                        info.fallback_args.take()
+                    } else {
+                        None
+                    }
+                })
+            });
+
+            if let Some(args) = retry_args {
+                match super::lifecycle::spawn_ytdlp_process(&app, &args) {
+                    Ok(mut child) => {
+                        let _ = app.emit(
+                            "download-log",
+                            serde_json::json!({
+                                "id": task_id,
+                                "line": "[ydl-gui] Selected format unavailable, retrying with default formats",
+                            }),
+                        );
+                        if let Ok(mut map) = processes.lock() {
+                            if let Some(info) = map.get_mut(&task_id) {
+                                if let Some(pid) = child.id() {
+                                    info.pid = pid;
+                                }
+                                info.last_error = None;
+                            }
+                        }
+                        if let (Some(stdout), Some(stderr)) =
+                            (child.stdout.take(), child.stderr.take())
+                        {
+                            spawn_output_reader(
+                                app.clone(),
+                                task_id.clone(),
+                                processes.clone(),
+                                stdout,
+                            );
+                            spawn_output_reader(
+                                app.clone(),
+                                task_id.clone(),
+                                processes.clone(),
+                                stderr,
+                            );
+                        }
+                        spawn_completion_handler(
+                            app.clone(),
+                            task_id.clone(),
+                            processes.clone(),
+                            child,
+                        );
+                        return;
+                    }
+                    Err(_) => {
+                        // 重试进程启动失败，落入下方正常错误处理
+                    }
+                }
+            }
+
             // 失败时仍清理 --print-to-file 临时文件，避免遗留
             let _ = resolve_output_file(&processes, &task_id);
             let error_msg = processes

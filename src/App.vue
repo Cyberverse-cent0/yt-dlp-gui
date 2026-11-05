@@ -5,6 +5,7 @@ import IconMdiHome from "~icons/mdi/home";
 import IconMdiPlaylistPlay from "~icons/mdi/playlist-play";
 import IconMdiDownload from "~icons/mdi/download";
 import IconMdiToolbox from "~icons/mdi/toolbox";
+import IconMdiMovieSearchOutline from "~icons/mdi/movie-search-outline";
 import type { Component } from "vue";
 import { useThemeVars } from "naive-ui";
 import { useSettingStore } from "@/stores/setting";
@@ -49,6 +50,7 @@ const currentRoute = computed(() => {
 
 const navItems: { key: string; icon: Component; labelKey: string }[] = [
   { key: "home", icon: IconMdiHome, labelKey: "nav.home" },
+  { key: "browse", icon: IconMdiMovieSearchOutline, labelKey: "nav.browse" },
   { key: "pending", icon: IconMdiPlaylistPlay, labelKey: "nav.pending" },
   { key: "downloads", icon: IconMdiDownload, labelKey: "nav.downloads" },
   { key: "toolbox", icon: IconMdiToolbox, labelKey: "nav.toolbox" },

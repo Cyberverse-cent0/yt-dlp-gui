@@ -26,7 +26,8 @@
     "home": "首頁",
     "pending": "待下載",
     "downloads": "下載",
-    "toolbox": "工具"
+    "toolbox": "工具",
+    "browse": "瀏覽"
   },
   "tray": {
     "show": "顯示視窗",

@@ -122,6 +122,7 @@ pub fn run() {
             commands::open_plugin_dir,
             commands::save_cookie_text,
             commands::fetch_video_info,
+            commands::fetch_browse_results,
             commands::start_download,
             commands::cancel_download,
             commands::check_files_exist,

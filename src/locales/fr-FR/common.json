@@ -26,7 +26,8 @@
     "home": "Accueil",
     "pending": "En attente",
     "downloads": "Téléchargements",
-    "toolbox": "Outils"
+    "toolbox": "Outils",
+    "browse": "Parcourir"
   },
   "tray": {
     "show": "Afficher la fenêtre",

@@ -1,0 +1,14 @@
+{
+  "browse": {
+    "placeholder": "搜索 YouTube 或粘贴频道 / 播放列表链接",
+    "hint": "输入关键词搜索 YouTube，或粘贴 YouTube 频道、播放列表链接浏览其中的视频。",
+    "initialHint": "搜索 YouTube 或粘贴频道 / 播放列表链接开始浏览",
+    "results": "搜索结果",
+    "empty": "未找到视频",
+    "search": "搜索",
+    "searchFailed": "搜索失败",
+    "addSelected": "加入队列（{n}）",
+    "addedToPending": "已将 {n} 个视频加入待下载队列",
+    "addAllFailed": "所选视频添加失败"
+  }
+}

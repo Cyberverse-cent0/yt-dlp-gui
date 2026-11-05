@@ -27,7 +27,8 @@
     "home": "Home",
     "pending": "Pending",
     "downloads": "Downloads",
-    "toolbox": "Tools"
+    "toolbox": "Tools",
+    "browse": "Browse"
   },
   "tray": {
     "show": "Show Window",

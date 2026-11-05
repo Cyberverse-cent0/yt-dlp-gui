@@ -26,7 +26,8 @@
     "home": "홈",
     "pending": "대기 중",
     "downloads": "다운로드",
-    "toolbox": "도구"
+    "toolbox": "도구",
+    "browse": "둘러보기"
   },
   "tray": {
     "show": "창 표시",

@@ -26,7 +26,8 @@
     "home": "Kezdőlap",
     "pending": "Letöltési sor",
     "downloads": "Letöltések",
-    "toolbox": "Eszközök"
+    "toolbox": "Eszközök",
+    "browse": "Böngészés"
   },
   "tray": {
     "show": "Ablak megjelenítése",

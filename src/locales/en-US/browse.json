@@ -1,0 +1,14 @@
+{
+  "browse": {
+    "placeholder": "Search YouTube or paste a channel / playlist URL",
+    "hint": "Enter keywords to search YouTube, or paste a YouTube channel or playlist link to browse its videos.",
+    "initialHint": "Search YouTube or paste a channel / playlist URL to start browsing",
+    "results": "Results",
+    "empty": "No videos found",
+    "search": "Search",
+    "searchFailed": "Search failed",
+    "addSelected": "Add {n} to queue",
+    "addedToPending": "Added {n} video(s) to the pending queue",
+    "addAllFailed": "Failed to add the selected videos"
+  }
+}

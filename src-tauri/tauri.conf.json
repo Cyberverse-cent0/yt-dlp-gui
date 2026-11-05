@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "identifier": "com.imsyy.yt-dlp-gui",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "pnpm web:dev",
     "devUrl": "http://localhost:15688",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"

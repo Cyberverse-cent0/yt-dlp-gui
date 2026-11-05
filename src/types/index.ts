@@ -216,6 +216,23 @@ export interface DownloadTask {
   params: DownloadTaskParams;
 }
 
+/** 浏览/搜索结果中的单个视频条目（轻量字段，选中后再拉取完整信息） */
+export interface BrowseEntry {
+  id: string;
+  title: string;
+  url: string;
+  thumbnail: string;
+  duration: number | null;
+  uploader: string;
+  viewCount: number | null;
+  isLive: boolean;
+}
+
+export interface BrowseResults {
+  title: string;
+  entries: BrowseEntry[];
+}
+
 export interface FetchedVideoData {
   url: string;
   videoInfo: VideoInfo;

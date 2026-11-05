@@ -14,6 +14,11 @@ const router = createRouter({
       component: Home,
     },
     {
+      path: "/browse",
+      name: "browse",
+      component: () => import("@/pages/Browse.vue"),
+    },
+    {
       path: "/pending",
       name: "pending",
       component: Pending,

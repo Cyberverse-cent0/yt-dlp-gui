@@ -31,6 +31,49 @@ const formatTime = (seconds: number): string => {
   return hours > 0 ? `${pad(hours)}:${pad(minutes)}:${pad(secs)}` : `${pad(minutes)}:${pad(secs)}`;
 };
 
+/**
+ * 校验待下载项的格式选择是否仍存在于已获取的格式列表中。
+ * 典型失效场景：播放列表条目沿用了首个 entry 的格式 ID、格式列表过期，
+ * 或用户手动改过选项。失效选择会让 yt-dlp 报
+ * 「Requested format is not available」直接失败，这里自动回退到最佳可用格式。
+ */
+const sanitizeFormatSelection = (item: PendingItem): boolean => {
+  let corrected = false;
+
+  // 只含 "+"/"*" 的表达式无法与静态列表比对，交给 yt-dlp 与后端兜底重试处理
+  const isExpression = (value: string) => value.includes("+") || value.includes("*");
+
+  if (item.videoFormats.length > 0 && item.selectedVideoFormat && !isExpression(item.selectedVideoFormat)) {
+    const exists = item.videoFormats.some(
+      (format) => format.format_id === item.selectedVideoFormat,
+    );
+    if (!exists) {
+      item.selectedVideoFormat = item.videoFormats[0]?.format_id ?? "";
+      corrected = true;
+    }
+  }
+
+  if (item.audioFormats.length > 0) {
+    if (item.selectedAudioFormat && !item.audioFormats.some((f) => f.format_id === item.selectedAudioFormat)) {
+      item.selectedAudioFormat = item.audioFormats[0]?.format_id ?? "";
+      corrected = true;
+    }
+    if (item.selectedAudioFormats.length > 0) {
+      const validIds = new Set(item.audioFormats.map((f) => f.format_id));
+      const filtered = item.selectedAudioFormats.filter((id) => validIds.has(id));
+      if (filtered.length !== item.selectedAudioFormats.length) {
+        item.selectedAudioFormats = filtered;
+        if (!item.selectedAudioFormat || !validIds.has(item.selectedAudioFormat)) {
+          item.selectedAudioFormat = filtered[0] ?? item.audioFormats[0]?.format_id ?? "";
+        }
+        corrected = true;
+      }
+    }
+  }
+
+  return corrected;
+};
+
 export const useDownloadLauncher = () => {
   const { t } = useI18n();
   const settingStore = useSettingStore();
@@ -140,6 +183,10 @@ export const useDownloadLauncher = () => {
     if (!settingStore.downloadDir) {
       window.$message.warning(t("detail.setDownloadDirFirst"));
       return "missing-directory";
+    }
+
+    if (sanitizeFormatSelection(item)) {
+      window.$message.warning(t("detail.formatAutoCorrected"));
     }
 
     const requiresFfmpegMerge =

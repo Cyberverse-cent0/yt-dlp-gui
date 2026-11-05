@@ -26,7 +26,8 @@
     "home": "ホーム",
     "pending": "保留中",
     "downloads": "ダウンロード",
-    "toolbox": "ツール"
+    "toolbox": "ツール",
+    "browse": "ブラウズ"
   },
   "tray": {
     "show": "ウィンドウを表示",

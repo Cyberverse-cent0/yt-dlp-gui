@@ -26,7 +26,8 @@
     "home": "Domov",
     "pending": "V riešení",
     "downloads": "Sťahovania",
-    "toolbox": "Nástroje"
+    "toolbox": "Nástroje",
+    "browse": "Prehľadávať"
   },
   "tray": {
     "show": "Zobraziť okno",

@@ -337,6 +337,24 @@ pub(super) fn build_download_args(
     Ok(args)
 }
 
+/// 从完整参数中移除格式选择器（`-f <sel>` 与 `--audio-multistreams`），
+/// 供「Requested format is not available」失败后用默认格式兜底重试。
+pub(super) fn strip_format_args(args: &[String]) -> Vec<String> {
+    let mut result = Vec::with_capacity(args.len());
+    let mut iter = args.iter().peekable();
+    while let Some(arg) = iter.next() {
+        if arg == "-f" {
+            iter.next();
+            continue;
+        }
+        if arg == "--audio-multistreams" {
+            continue;
+        }
+        result.push(arg.clone());
+    }
+    result
+}
+
 /// 将前端的 `sub:<lang>` / `auto:<lang>` 选择转换为 yt-dlp 参数。
 /// `--sub-langs` 对普通和自动字幕共用，因此语言只需去重后传递一次。
 fn append_subtitle_args(args: &mut Vec<String>, selections: &[String]) {

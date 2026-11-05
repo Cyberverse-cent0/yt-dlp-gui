@@ -1,0 +1,14 @@
+{
+  "browse": {
+    "placeholder": "搜尋 YouTube 或貼上頻道 / 播放清單連結",
+    "hint": "輸入關鍵字搜尋 YouTube，或貼上 YouTube 頻道、播放清單連結瀏覽其中的影片。",
+    "initialHint": "搜尋 YouTube 或貼上頻道 / 播放清單連結開始瀏覽",
+    "results": "搜尋結果",
+    "empty": "找不到影片",
+    "search": "搜尋",
+    "searchFailed": "搜尋失敗",
+    "addSelected": "加入佇列（{n}）",
+    "addedToPending": "已將 {n} 部影片加入待下載佇列",
+    "addAllFailed": "所選影片新增失敗"
+  }
+}

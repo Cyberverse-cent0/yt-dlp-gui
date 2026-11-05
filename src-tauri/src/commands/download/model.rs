@@ -19,6 +19,8 @@ pub struct DownloadProcessInfo {
     pub clip_duration: Option<f64>,
     /// yt-dlp 输出的最后一条 ERROR，用于替代无意义的退出码错误。
     pub last_error: Option<String>,
+    /// 格式不可用时的兜底参数（去掉 -f/--audio-multistreams），仅允许重试一次。
+    pub fallback_args: Option<Vec<String>>,
 }
 
 /// 下载状态管理（全局共享）

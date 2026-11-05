@@ -136,6 +136,7 @@
     "playlistTag": "Playlist {n}P",
     "views": " views",
     "viewWan": "K",
-    "viewYi": "M"
+    "viewYi": "M",
+    "formatAutoCorrected": "Selected format was unavailable for this video; automatically switched to the best available format."
   }
 }

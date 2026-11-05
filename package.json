@@ -36,7 +36,8 @@
   "packageManager": "pnpm@12.14.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tauri dev",
+    "web:dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri:dev": "tauri dev",

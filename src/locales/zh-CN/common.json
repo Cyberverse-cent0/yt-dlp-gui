@@ -27,7 +27,8 @@
     "home": "首页",
     "pending": "待下载",
     "downloads": "下载",
-    "toolbox": "工具"
+    "toolbox": "工具",
+    "browse": "浏览"
   },
   "tray": {
     "show": "显示窗口",

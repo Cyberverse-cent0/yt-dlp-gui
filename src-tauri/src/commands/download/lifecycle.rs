@@ -7,10 +7,35 @@ use std::process::Stdio;
 use tauri::{AppHandle, Manager};
 
 use super::{
-    arguments::{build_download_args, requires_ffmpeg_merge},
+    arguments::{build_download_args, requires_ffmpeg_merge, strip_format_args},
     model::{DownloadParams, DownloadProcessInfo, DownloadState},
     output::{spawn_completion_handler, spawn_output_reader},
 };
+
+/// 以统一环境启动 yt-dlp 子进程（UTF-8 环境变量、置空 stdin、kill_on_drop、隐藏 Windows 控制台）。
+/// 供首次启动与「格式不可用」兜底重试共用。
+pub(super) fn spawn_ytdlp_process(
+    app: &AppHandle,
+    args: &[String],
+) -> Result<tokio::process::Child, String> {
+    let ytdlp_path = utils::get_ytdlp_path(app)?;
+    if !ytdlp_path.exists() {
+        return Err("err_ytdlp_not_installed".to_string());
+    }
+    let mut cmd = tokio::process::Command::new(&ytdlp_path);
+    cmd.args(args)
+        .env("PYTHONUTF8", "1")
+        .env("PYTHONIOENCODING", "utf-8");
+    // 应用异常退出时托底杀掉子进程，避免 yt-dlp/ffmpeg 变成孤儿
+    cmd.kill_on_drop(true);
+    // tokio 的 spawn 默认继承 stdin，置空避免 yt-dlp 在交互场景下等待输入挂住
+    cmd.stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd.spawn().map_err(|e| format!("err_start_download:{}", e))
+}
 
 /// 启动下载任务
 #[tauri::command]
@@ -48,23 +73,14 @@ pub async fn start_download(
     full_args.push("after_move:filepath".to_string());
     full_args.push(filepath_file.clone());
 
-    // 启动 yt-dlp 子进程
-    let mut cmd = tokio::process::Command::new(&ytdlp_path);
-    cmd.args(&full_args)
-        .env("PYTHONUTF8", "1")
-        .env("PYTHONIOENCODING", "utf-8");
-    // 应用异常退出时托底杀掉子进程，避免 yt-dlp/ffmpeg 变成孤儿
-    cmd.kill_on_drop(true);
-    // tokio 的 spawn 默认继承 stdin，置空避免 yt-dlp 在交互场景下等待输入挂住
-    cmd.stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    #[cfg(target_os = "windows")]
-    cmd.creation_flags(CREATE_NO_WINDOW);
+    // 兜底参数：仅当本次确实携带了格式选择器（-f）时才保留重试能力，
+    // 避免对本来就没有 -f 的任务做无意义重试。
+    // 注意不能用 requires_ffmpeg_merge 判断：单格式（不含 +）同样可能报
+    // 「Requested format is not available」。
+    let has_format_selector = full_args.windows(2).any(|pair| pair[0] == "-f");
+    let fallback_args = has_format_selector.then(|| strip_format_args(&full_args));
 
-    let mut child = cmd
-        .spawn()
-        .map_err(|e| format!("err_start_download:{}", e))?;
+    let mut child = spawn_ytdlp_process(&app, &full_args)?;
 
     let pid = child.id().ok_or("err_get_pid")?;
     let task_id = params.id.clone();
@@ -90,6 +106,7 @@ pub async fn start_download(
                 filepath_file: Some(filepath_file),
                 clip_duration,
                 last_error: None,
+                fallback_args,
             },
         );
     }
