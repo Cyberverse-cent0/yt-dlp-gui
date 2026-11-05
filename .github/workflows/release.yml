@@ -10,14 +10,6 @@ on:
         description: Existing release tag to upload artifacts to
         required: true
         type: string
-      platform:
-        description: Platforms to build
-        required: true
-        type: choice
-        options:
-          - all
-          - windows
-        default: all
 
 # 发版只串行不取消：同一 ref 的多次触发排队执行，避免产物交错；绝不在中途取消
 concurrency:
@@ -28,7 +20,6 @@ permissions:
 
 jobs:
   release:
-    if: ${{ inputs.platform != 'windows' || startsWith(matrix.platform, 'windows-') }}
     strategy:
       fail-fast: false
       matrix:
