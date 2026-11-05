@@ -1,9 +1,9 @@
 //! 传递给 yt-dlp 的外部工具与插件参数。
 
-use tauri::AppHandle;
-use std::process::Command;
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
+use std::process::Command;
+use tauri::AppHandle;
 
 use super::paths::{
     get_bun_path, get_deno_path, get_ffmpeg_path, get_managed_deno_path, get_plugin_dir,
