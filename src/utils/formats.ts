@@ -36,6 +36,15 @@ export const getCodecLabel = (codec: string): string => {
   return CODEC_LABELS[key] || key.toUpperCase();
 };
 
+/**
+ * 判断格式是否走 HLS/m3u8 传输。
+ * yt-dlp 对 YouTube 等站点会同时给出 DASH（https）与 HLS（m3u8）两套格式；
+ * HLS 下载得到的是 MPEG-TS 裸流，部分源时间戳缺失会导致 ffmpeg 合并失败，
+ * 因此同档位下应优先选择非 HLS 格式。
+ */
+export const isHlsFormat = (format: VideoFormat): boolean =>
+  /m3u8/i.test(format.protocol || "");
+
 const audioRoleRank = (format: VideoFormat): number => {
   const description = `${format.format_note || ""} ${format.format || ""}`.toLowerCase();
   if (description.includes("original")) return 3;
@@ -61,6 +70,9 @@ export const compareAudioFormats = (a: VideoFormat, b: VideoFormat): number => {
   const aDrc = /\bdrc\b/i.test(a.format_note || "") ? 1 : 0;
   const bDrc = /\bdrc\b/i.test(b.format_note || "") ? 1 : 0;
   if (aDrc !== bDrc) return aDrc - bDrc;
+
+  const protocolDifference = Number(isHlsFormat(a)) - Number(isHlsFormat(b));
+  if (protocolDifference !== 0) return protocolDifference;
 
   return (b.abr || b.tbr || 0) - (a.abr || a.tbr || 0);
 };

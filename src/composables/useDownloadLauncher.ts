@@ -143,10 +143,11 @@ export const useDownloadLauncher = () => {
     }
 
     const requiresFfmpegMerge =
-      item.downloadMode === "default" &&
-      Boolean(item.selectedVideoFormat) &&
-      Boolean(item.selectedAudioFormat) &&
-      !item.noMerge;
+      (Boolean(item.selectedVideoFormat?.includes("+")) ||
+        (item.downloadMode === "default" &&
+          Boolean(item.selectedVideoFormat) &&
+          Boolean(item.selectedAudioFormat) &&
+          !item.noMerge));
     if (requiresFfmpegMerge) {
       try {
         const status = await invoke<FfmpegStatus>("get_ffmpeg_status");

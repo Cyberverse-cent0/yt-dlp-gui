@@ -72,6 +72,8 @@ export interface VideoFormat {
   tbr: number | null;
   vbr?: number | null;
   abr: number | null;
+  /** 传输协议（"https" / "m3u8" / "m3u8_native" 等），HLS 格式合并稳定性差需降权 */
+  protocol?: string | null;
 }
 
 /** 规范化的视频流规格（字段固定，结构严谨，消除展示跳变） */

@@ -6,12 +6,13 @@ use tauri::AppHandle;
 use super::model::DownloadParams;
 
 pub(super) fn requires_ffmpeg_merge(params: &DownloadParams) -> bool {
-    params.download_mode == "default"
-        && params
-            .video_format
-            .as_deref()
-            .is_some_and(|format| !format.is_empty())
-        && !params.no_merge
+    // A selected format can itself be a yt-dlp merge expression, including in
+    // video-only mode. Check the actual `-f` selector we will pass to yt-dlp
+    // instead of assuming only the default mode can request separate streams.
+    build_format_args(params)
+        .windows(2)
+        .find(|pair| pair[0] == "-f")
+        .is_some_and(|pair| pair[1].contains('+'))
 }
 
 /// 根据下载模式与格式选择，构建 `-f` 格式参数。
@@ -163,6 +164,14 @@ pub(super) fn build_download_args(
     args.extend(build_format_args(params));
     // 多音频流支持（用于处理多轨道音频视频，如 Dropbox 双音频）
     args.extend(build_audio_multistream_args(params));
+
+    // 合并输出默认使用 mp4：m3u8/HLS 下载的 MPEG-TS 流可能缺少时间戳，
+    // ffmpeg 无法将其 copy 进 mkv，但 mp4 封装器能修复时间戳。
+    // 置于 remux_format/custom_args 之前，用户显式设置仍可覆盖。
+    if requires_ffmpeg_merge(params) {
+        args.push("--merge-output-format".to_string());
+        args.push("mp4".to_string());
+    }
 
     // 代理
     if let Some(ref proxy) = params.proxy {

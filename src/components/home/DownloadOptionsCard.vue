@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { normalizeAudioFormat, normalizeVideoFormat } from "@/utils/normalizer";
-import { getCodecKey, getCodecLabel } from "@/utils/formats";
+import { getCodecKey, getCodecLabel, isHlsFormat } from "@/utils/formats";
 import { useI18n } from "vue-i18n";
 import type { VideoFormat, VideoInfo } from "@/types";
 
@@ -79,6 +79,7 @@ const videoFormatOptions = computed(() => {
       n.codec,
       n.dynamicRange,
       n.container,
+      isHlsFormat(f) ? "HLS" : "",
       n.filesizeLabel,
       `#${n.formatId}`,
     ].filter(Boolean);
@@ -101,6 +102,7 @@ const audioFormatOptions = computed(() => {
       n.codec,
       n.channelsLabel,
       n.container,
+      isHlsFormat(f) ? "HLS" : "",
       n.filesizeLabel,
       `#${n.formatId}`,
     ].filter(Boolean);

@@ -1,5 +1,5 @@
 import type { NormalizedAudioFormat, NormalizedVideoFormat, VideoFormat } from "@/types";
-import { getCodecKey, getCodecLabel } from "./formats.ts";
+import { getCodecKey, getCodecLabel, isHlsFormat } from "./formats.ts";
 
 /** 格式化文件大小为可读字符串（B / KB / MB / GB） */
 export const formatFileSize = (bytes: number): string => {
@@ -206,6 +206,10 @@ export const compareVideoFormats = (a: VideoFormat, b: VideoFormat): number => {
 
   const fpsDiff = (b.fps || 0) - (a.fps || 0);
   if (fpsDiff !== 0) return fpsDiff;
+
+  // 同档位优先非 HLS 格式：m3u8 下载的 MPEG-TS 可能缺少时间戳导致合并失败
+  const protocolDiff = Number(isHlsFormat(a)) - Number(isHlsFormat(b));
+  if (protocolDiff !== 0) return protocolDiff;
 
   const brA = a.vbr || a.tbr || 0;
   const brB = b.vbr || b.tbr || 0;
