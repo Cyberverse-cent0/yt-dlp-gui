@@ -1,13 +1,14 @@
 //! 系统相关命令
 
 use tauri::AppHandle;
+#[cfg(target_os = "windows")]
+use tauri::Manager;
 
 /// 检测平台默认下载目录
 #[tauri::command]
 pub fn get_default_download_dir(app: AppHandle) -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
-        use std::path::PathBuf;
         let downloads = app
             .path()
             .download_dir()

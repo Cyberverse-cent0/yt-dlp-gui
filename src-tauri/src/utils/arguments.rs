@@ -2,6 +2,8 @@
 
 use tauri::AppHandle;
 use std::process::Command;
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 
 use super::paths::{
     get_bun_path, get_deno_path, get_ffmpeg_path, get_managed_deno_path, get_plugin_dir,
