@@ -223,7 +223,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Windows installers
-        run: pnpm tauri build --target ${{ matrix.target }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
+        run: pnpm tauri build --target ${{ matrix.target }} --config src-tauri/tauri.windows-ci.conf.json
 
       - name: Upload installers to release
         env:
