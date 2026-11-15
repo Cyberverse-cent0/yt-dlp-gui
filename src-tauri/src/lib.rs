@@ -73,6 +73,8 @@ pub fn run() {
             // 这里重新隐藏，统一交给前端 bootstrap 完成后调用 show()，避免启动白屏闪烁。
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.hide();
+                #[cfg(target_os = "linux")]
+                app::linux_fix::install(window);
             }
             #[cfg(any(windows, target_os = "linux"))]
             {
