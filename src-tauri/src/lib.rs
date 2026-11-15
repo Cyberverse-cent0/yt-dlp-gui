@@ -68,6 +68,21 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_deep_link::init())
+        // WebKitGTK/WebView2 的 prefers-color-scheme 无法可靠跟随系统主题，
+        // 把原生 ThemeChanged 事件转发给前端作为系统主题信号。
+        .on_window_event(|window, event| {
+            if window.label() == "main" {
+                if let tauri::WindowEvent::ThemeChanged(theme) = event {
+                    let _ = window.emit(
+                        "system-theme-changed",
+                        match theme {
+                            tauri::Theme::Dark => "dark",
+                            _ => "light",
+                        },
+                    );
+                }
+            }
+        })
         .setup(|app| {
             // 窗口状态恢复（尤其是最大化）可能会让窗口在此时提前显示出来，
             // 这里重新隐藏，统一交给前端 bootstrap 完成后调用 show()，避免启动白屏闪烁。
@@ -98,6 +113,7 @@ pub fn run() {
             app::commands::take_cli_open_request,
             app::browser_bridge::take_browser_extension_imports,
             commands::get_platform,
+            commands::get_system_theme,
             commands::get_default_download_dir,
             commands::set_tool_sources,
             commands::set_js_runtime,

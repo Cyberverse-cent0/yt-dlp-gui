@@ -64,10 +64,13 @@
         try {
           const raw = localStorage.getItem("setting");
           const mode = raw ? JSON.parse(raw).themeMode : "auto";
-          const isDark =
-            mode === "dark" ||
-            (mode === "auto" &&
-              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          // 优先使用应用缓存的系统主题快照（原生检测结果），
+          // 旧版本无缓存时回退 matchMedia
+          const cached = localStorage.getItem("ydl-system-theme");
+          const systemDark = cached
+            ? cached === "dark"
+            : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const isDark = mode === "dark" || (mode === "auto" && systemDark);
           if (isDark) {
             document.getElementById("loading-screen").classList.add("dark");
           }

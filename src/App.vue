@@ -15,6 +15,7 @@ import { localeEntries } from "@/locales";
 import { useExternalImports } from "@/composables/useExternalImports";
 import { useTrayManager } from "@/composables/useTrayManager";
 import { useAppBootstrap } from "@/composables/useAppBootstrap";
+import { syncWindowTheme } from "@/composables/useSystemTheme";
 
 const router = useRouter();
 const route = useRoute();
@@ -79,7 +80,9 @@ onMounted(async () => {
     await setupExternalImportListeners();
     await setupTray();
   } finally {
+    // 显示窗口前先落定原生标题栏主题，避免首帧闪烁错误的标题栏配色；
     // 引导失败也要显示窗口，否则应用只剩托盘图标、看不到界面
+    await syncWindowTheme();
     await currentAppWindow.show();
   }
 });

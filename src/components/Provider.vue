@@ -32,7 +32,6 @@ import {
   enUS,
   dateEnUS,
   darkTheme,
-  useOsTheme,
   useLoadingBar,
   useModal,
   useDialog,
@@ -42,7 +41,11 @@ import {
 } from "naive-ui";
 import { useI18n } from "vue-i18n";
 import { useSettingStore } from "@/stores/setting";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import {
+  SYSTEM_THEME_CACHE_KEY,
+  syncWindowTheme,
+  useSystemTheme,
+} from "@/composables/useSystemTheme";
 
 // 设置
 const settingStore = useSettingStore();
@@ -52,8 +55,8 @@ const { locale } = useI18n();
 const naiveLocale = computed(() => (locale.value.startsWith("zh") ? zhCN : enUS));
 const naiveDateLocale = computed(() => (locale.value.startsWith("zh") ? dateZhCN : dateEnUS));
 
-// 操作系统主题
-const osTheme = useOsTheme();
+// 操作系统主题（原生检测，WebKitGTK/WebView2 的 prefers-color-scheme 不可靠）
+const { systemTheme, refreshSystemTheme } = useSystemTheme();
 
 // 全局主题
 const themeOverrides = shallowRef<GlobalThemeOverrides>({
@@ -66,7 +69,7 @@ const themeOverrides = shallowRef<GlobalThemeOverrides>({
 const theme = computed(() => {
   return settingStore.themeMode === "auto"
     ? // 跟随系统
-      osTheme.value === "dark"
+      systemTheme.value === "dark"
       ? darkTheme
       : null
     : // 自定义
@@ -75,20 +78,38 @@ const theme = computed(() => {
       : null;
 });
 
-// 同步原生标题栏主题
-const syncNativeTheme = async (): Promise<void> => {
-  try {
-    await getCurrentWindow().setTheme(
-      settingStore.themeMode === "auto" ? null : settingStore.themeMode,
-    );
-  } catch (error) {
-    console.warn("[YDL GUI] failed to sync native window theme:", error);
-  }
-};
-
 watch(
   () => settingStore.themeMode,
-  () => void syncNativeTheme(),
+  (mode) => {
+    void (async () => {
+      // 必须先清除/重设窗口主题覆盖，再探测系统主题，
+      // 否则 window.theme() 仍返回显式覆盖值。
+      await syncWindowTheme();
+      // 显式主题期间探测到的只是覆盖值，切回 auto 时重新探测真实系统主题。
+      if (mode === "auto") await refreshSystemTheme();
+    })();
+  },
+  { immediate: true },
+);
+
+// 系统主题变化时重新同步原生窗口主题：
+// Linux 上 portal 主题变更会写入 preferred_theme 覆盖 set_theme 的
+// 显式选择，需要在事件后重申一次。
+watch(systemTheme, () => void syncWindowTheme());
+
+// index.html 启动闪屏在应用挂载前读取该缓存决定背景色，
+// 仅在 auto 模式下记录，避免手动主题污染系统主题快照。
+watch(
+  [() => settingStore.themeMode, systemTheme],
+  ([mode, theme]) => {
+    if (mode === "auto") {
+      try {
+        localStorage.setItem(SYSTEM_THEME_CACHE_KEY, theme);
+      } catch {
+        // localStorage 不可用时忽略
+      }
+    }
+  },
   { immediate: true },
 );
 
