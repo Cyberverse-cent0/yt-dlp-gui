@@ -311,5 +311,11 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  // 页面根节点是 flex item，默认 min-height:auto 会阻止其收缩到
+  // 容器高度，导致内容溢出被 overflow:hidden 裁剪、页面无法滚动
+  > * {
+    min-height: 0;
+  }
 }
 </style>

@@ -596,8 +596,10 @@ const handleBatchSearch = async (): Promise<void> => {
 }
 
 .search-view {
-  height: 100%;
-  min-height: 300px;
+  // min-height 代替 height：内容超出视口时容器随内容增高，
+  // 交给 .home-page 正常滚动；放得下时仍保持垂直居中
+  min-height: 100%;
+  min-height: max(300px, 100%);
   padding-bottom: 40px;
 
   .hero-logo {
