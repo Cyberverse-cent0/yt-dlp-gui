@@ -129,6 +129,8 @@ jobs:
               cd "$bundle_dir"
               "./$image_name" --appimage-extract
             )
+            # squashfs-root 以 0700 解出，appimagetool 会拒绝打包，先放开读/执行权限
+            chmod -R a+rX "$bundle_dir/squashfs-root"
             find "$bundle_dir/squashfs-root" -name 'libwayland-*.so*' -delete
             APPIMAGE_EXTRACT_AND_RUN=1 "$RUNNER_TEMP/appimagetool" "$bundle_dir/squashfs-root" "$RUNNER_TEMP/$image_name"
             mv "$RUNNER_TEMP/$image_name" "$image"
@@ -176,6 +178,7 @@ jobs:
             chmod +x "$appimage"
             extract_dir=$(mktemp -d)
             "$appimage" --appimage-extract --dest "$extract_dir"
+            chmod -R a+rX "$extract_dir/squashfs-root"
             rm -f "$extract_dir"/squashfs-root/usr/lib/libwayland-*.so*
             "$extract_dir"/squashfs-root/AppRun --appimage-pack --appimage-output "$appimage"
             rm -rf "$extract_dir"
