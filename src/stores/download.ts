@@ -463,6 +463,22 @@ export const useDownloadStore = defineStore("download", () => {
     const existingTask = tasks.value.find((taskItem) => taskItem.id === id);
     if (!existingTask) return;
 
+    // 与 launchDownload 相同的活跃任务查重：同 URL + 同目录并发下载会写冲突
+    const duplicate = tasks.value.find(
+      (taskItem) =>
+        taskItem.id !== id &&
+        taskItem.url === existingTask.url &&
+        taskItem.params?.downloadDir === existingTask.params?.downloadDir &&
+        (taskItem.status === "preparing" ||
+          taskItem.status === "queued" ||
+          taskItem.status === "downloading" ||
+          taskItem.status === "postprocessing"),
+    );
+    if (duplicate) {
+      window.$message.warning(i18n.global.t("detail.duplicateDownloadActive"));
+      return;
+    }
+
     const newTaskId = `dl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const fullParams = normalizeTaskParams(existingTask.params);
 

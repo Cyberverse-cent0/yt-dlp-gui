@@ -138,6 +138,7 @@
     "views": "次播放",
     "viewWan": "万",
     "viewYi": "亿",
-    "formatAutoCorrected": "所选格式对此视频不可用，已自动切换为最佳可用格式。"
+    "formatAutoCorrected": "所选格式对此视频不可用，已自动切换为最佳可用格式。",
+    "duplicateDownloadActive": "相同链接到同一文件夹的下载任务正在进行中"
   }
 }

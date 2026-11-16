@@ -14,6 +14,7 @@ import type { DownloadTask, FfmpegStatus, PendingItem } from "@/types";
 export type DownloadLaunchResult =
   | "started"
   | "queued"
+  | "duplicate"
   | "missing-directory"
   | "missing-ffmpeg"
   | "failed";
@@ -183,6 +184,25 @@ export const useDownloadLauncher = () => {
     if (!settingStore.downloadDir) {
       window.$message.warning(t("detail.setDownloadDirFirst"));
       return "missing-directory";
+    }
+
+    // 同一 URL + 同一下载目录的活跃任务会写入同名输出文件，
+    // 并发 yt-dlp 进程互相覆盖 .part/成品导致损坏或卡死，这里直接拦截。
+    const isActive = (status: DownloadTask["status"]) =>
+      status === "preparing" ||
+      status === "queued" ||
+      status === "downloading" ||
+      status === "postprocessing";
+    const duplicate = downloadStore.tasks.find(
+      (task) =>
+        task.url === item.url &&
+        task.params?.downloadDir === settingStore.downloadDir &&
+        isActive(task.status),
+    );
+    if (duplicate) {
+      window.$message.warning(t("detail.duplicateDownloadActive"));
+      if (preparingTaskId) await downloadStore.removeTask(preparingTaskId);
+      return "duplicate";
     }
 
     if (sanitizeFormatSelection(item)) {

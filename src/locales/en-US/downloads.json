@@ -138,6 +138,7 @@
     "views": " views",
     "viewWan": "K",
     "viewYi": "M",
-    "formatAutoCorrected": "Selected format was unavailable for this video; automatically switched to the best available format."
+    "formatAutoCorrected": "Selected format was unavailable for this video; automatically switched to the best available format.",
+    "duplicateDownloadActive": "An identical download to the same folder is already in progress"
   }
 }
