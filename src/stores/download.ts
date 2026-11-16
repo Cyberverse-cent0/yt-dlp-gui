@@ -9,7 +9,7 @@ import {
 } from "@tauri-apps/plugin-notification";
 import type { DownloadTask } from "@/types";
 import { useSettingStore } from "@/stores/setting";
-import { formatFileSize } from "@/utils/format";
+import { formatError, formatFileSize } from "@/utils/format";
 import { cleanMultipleTasksResiduals } from "@/utils/taskFiles";
 import { normalizeTaskParams } from "@/utils/taskParams";
 import { pushTaskLog, trimTaskLogs } from "@/utils/logs";
@@ -73,9 +73,8 @@ export const useDownloadStore = defineStore("download", () => {
     } catch (error: unknown) {
       next.status = "error";
       next.error =
-        error instanceof Error
-          ? error.message
-          : String(error) || i18n.global.t("downloads.startFailed");
+        formatError(error instanceof Error ? error.message : String(error)) ||
+        i18n.global.t("downloads.startFailed");
       next.speed = "";
       next.eta = "";
       await updateTask(next);
@@ -440,9 +439,8 @@ export const useDownloadStore = defineStore("download", () => {
       } catch (error: unknown) {
         task.status = "error";
         task.error =
-          error instanceof Error
-            ? error.message
-            : String(error) || i18n.global.t("downloads.startFailed");
+          formatError(error instanceof Error ? error.message : String(error)) ||
+          i18n.global.t("downloads.startFailed");
         await updateTask(task);
         scheduleAutoRetry(task);
       }
@@ -515,9 +513,8 @@ export const useDownloadStore = defineStore("download", () => {
       } catch (error: unknown) {
         newTask.status = "error";
         newTask.error =
-          error instanceof Error
-            ? error.message
-            : String(error) || i18n.global.t("downloads.startFailed");
+          formatError(error instanceof Error ? error.message : String(error)) ||
+          i18n.global.t("downloads.startFailed");
       }
       await updateTask(newTask);
     }

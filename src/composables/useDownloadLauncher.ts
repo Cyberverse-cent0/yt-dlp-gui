@@ -5,6 +5,7 @@ import {
   composeOutputTemplate,
   validateOutputTemplate,
 } from "@/utils/output-template";
+import { formatError } from "@/utils/format";
 import { useDownloadStore } from "@/stores/download";
 import { useSettingStore } from "@/stores/setting";
 import { useStatusStore } from "@/stores/status";
@@ -333,7 +334,8 @@ export const useDownloadLauncher = () => {
       return "started";
     } catch (error: unknown) {
       window.$message.error(
-        error instanceof Error ? error.message : String(error) || t("detail.startDownloadFailed"),
+        formatError(error instanceof Error ? error.message : String(error)) ||
+          t("detail.startDownloadFailed"),
       );
       if (preparingTaskId) {
         const failedTask = downloadStore.tasks.find((candidate) => candidate.id === taskId);

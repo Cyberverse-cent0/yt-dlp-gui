@@ -121,6 +121,7 @@
     "err_read_plugin": "Failed to read plugin package",
     "err_save_plugin": "Failed to save plugin package",
     "err_read_plugin_dir": "Failed to read plugin directory",
-    "err_open_dir": "Failed to open directory"
+    "err_open_dir": "Failed to open directory",
+    "err_duplicate_download": "An identical download to the same folder is already running"
   }
 }

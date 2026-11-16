@@ -121,6 +121,7 @@
     "err_read_plugin": "读取插件包失败",
     "err_save_plugin": "保存插件包失败",
     "err_read_plugin_dir": "读取插件目录失败",
-    "err_open_dir": "打开目录失败"
+    "err_open_dir": "打开目录失败",
+    "err_duplicate_download": "相同链接到同一文件夹的下载任务已在运行中"
   }
 }

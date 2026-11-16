@@ -13,6 +13,8 @@ pub struct DownloadProcessInfo {
     pub output_files: Vec<String>,
     /// 下载目录
     pub download_dir: String,
+    /// 下载目标 URL，用于同 URL + 同目录的并发查重
+    pub url: String,
     /// 临时文件路径，用于存储 --print-to-file 写出的最终文件路径
     pub filepath_file: Option<String>,
     /// 时间裁剪的片段时长（秒），用于计算 ffmpeg 处理进度

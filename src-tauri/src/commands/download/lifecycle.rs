@@ -55,6 +55,19 @@ pub async fn start_download(
         return Err("err_ffmpeg_required_for_merge".to_string());
     }
 
+    // 后端兜底查重：前端已拦截同 URL + 同目录的活跃任务，但 CLI/重试/竞态
+    // 路径仍可能绕过，这里以运行中的进程表为准再拦一次，避免两个 yt-dlp
+    // 进程写同一输出文件互相损坏。
+    {
+        let map = state.processes.lock().map_err(|e| e.to_string())?;
+        let duplicate = map.iter().any(|(key, info)| {
+            key != &params.id && info.url == params.url && info.download_dir == params.download_dir
+        });
+        if duplicate {
+            return Err("err_duplicate_download".to_string());
+        }
+    }
+
     let args = build_download_args(&app, &params)?;
 
     // 生成临时文件路径，用于 --print-to-file 输出最终文件路径
@@ -103,6 +116,7 @@ pub async fn start_download(
                 cancelled: false,
                 output_files: Vec::new(),
                 download_dir: params.download_dir.clone(),
+                url: params.url.clone(),
                 filepath_file: Some(filepath_file),
                 clip_duration,
                 last_error: None,
