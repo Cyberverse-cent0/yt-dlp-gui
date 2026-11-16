@@ -34,30 +34,30 @@ fn comment_sort_value(sort: &str) -> &'static str {
     }
 }
 
-/// 获取视频评论（仅支持 YouTube；其他站点可能没有 comments 字段）
-#[tauri::command]
-#[allow(clippy::too_many_arguments)]
-pub async fn tool_fetch_comments(
-    app: AppHandle,
-    run_id: String,
-    url: String,
+/// 拉取并解析视频评论的共享实现。
+/// `run_id` 非空时把 yt-dlp 子进程登记到进程注册表，供工具任务取消时终止；
+/// 观看页等一次性调用传 None。
+pub(crate) async fn fetch_comments(
+    app: &AppHandle,
+    run_id: Option<&str>,
+    url: &str,
     max_comments: u32,
-    sort: String,
-    cookie_file: Option<String>,
-    cookie_browser: Option<String>,
-    proxy: Option<String>,
+    sort: &str,
+    cookie_file: Option<&str>,
+    cookie_browser: Option<&str>,
+    proxy: Option<&str>,
 ) -> Result<Value, String> {
     let max_str = max_comments.clamp(1, MAX_COMMENTS).to_string();
     let extractor_arg = format!(
         "youtube:max_comments={};comment_sort={}",
         max_str,
-        comment_sort_value(&sort)
+        comment_sort_value(sort)
     );
 
     let info = support::run_ytdlp_json_tracked(
-        &app,
-        Some(&run_id),
-        &url,
+        app,
+        run_id,
+        url,
         &[
             "--no-check-formats",
             "--no-playlist",
@@ -65,9 +65,9 @@ pub async fn tool_fetch_comments(
             "--extractor-args",
             &extractor_arg,
         ],
-        cookie_file.as_deref(),
-        cookie_browser.as_deref(),
-        proxy.as_deref(),
+        cookie_file,
+        cookie_browser,
+        proxy,
     )
     .await?;
 
@@ -123,4 +123,53 @@ pub async fn tool_fetch_comments(
         "comment_count": info.get("comment_count").cloned().unwrap_or(Value::Null),
         "comments": comments,
     }))
+}
+
+/// 获取视频评论（仅支持 YouTube；其他站点可能没有 comments 字段）
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub async fn tool_fetch_comments(
+    app: AppHandle,
+    run_id: String,
+    url: String,
+    max_comments: u32,
+    sort: String,
+    cookie_file: Option<String>,
+    cookie_browser: Option<String>,
+    proxy: Option<String>,
+) -> Result<Value, String> {
+    fetch_comments(
+        &app,
+        Some(&run_id),
+        &url,
+        max_comments,
+        &sort,
+        cookie_file.as_deref(),
+        cookie_browser.as_deref(),
+        proxy.as_deref(),
+    )
+    .await
+}
+
+/// 观看页评论加载：一次性拉取 Top 评论（含回复），不走工具任务系统，
+/// 避免与工具箱 Comments 页共享同一 toolId 状态。
+#[tauri::command]
+pub async fn fetch_video_comments(
+    app: AppHandle,
+    url: String,
+    cookie_file: Option<String>,
+    cookie_browser: Option<String>,
+    proxy: Option<String>,
+) -> Result<Value, String> {
+    fetch_comments(
+        &app,
+        None,
+        &url,
+        100,
+        "top",
+        cookie_file.as_deref(),
+        cookie_browser.as_deref(),
+        proxy.as_deref(),
+    )
+    .await
 }

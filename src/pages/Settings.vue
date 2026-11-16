@@ -236,6 +236,12 @@ watch(
         </div>
         <div class="info-list">
           <div class="info-row">
+            <span class="info-label">{{ $t("settings.autoRetryFailed") }}</span>
+            <n-switch v-model:value="settingStore.autoRetryFailed" />
+          </div>
+        </div>
+        <div class="info-list">
+          <div class="info-row">
             <span class="info-label">{{ $t("settings.tempDir") }}</span>
             <n-input
               v-model:value="settingStore.tempDir"
@@ -307,7 +313,7 @@ watch(
             <n-button
               text
               tag="a"
-              href="https://github.com/imsyy/yt-dlp-gui"
+              href="https://github.com/Cyberverse-cent0/yt-dlp-gui"
               target="_blank"
               size="tiny"
             >

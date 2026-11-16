@@ -141,6 +141,8 @@ pub fn run() {
             commands::save_cookie_text,
             commands::fetch_video_info,
             commands::fetch_browse_results,
+            commands::fetch_stream_url,
+            commands::fetch_video_comments,
             commands::start_download,
             commands::cancel_download,
             commands::check_files_exist,

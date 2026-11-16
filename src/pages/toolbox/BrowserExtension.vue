@@ -8,7 +8,7 @@ import IconMdiFolderOpenOutline from "~icons/mdi/folder-open-outline";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
-const REPO_URL = "https://github.com/imsyy/yt-dlp-gui/tree/master/browser-extension";
+const REPO_URL = "https://github.com/Cyberverse-cent0/yt-dlp-gui/tree/master/browser-extension";
 const SUPPORTED_SITES_URL = "https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md";
 const preparing = ref(false);
 

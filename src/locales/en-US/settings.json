@@ -98,6 +98,7 @@
     "systemNotification": "System",
     "all": "All",
     "noOverwrites": "Don't overwrite existing files",
+    "autoRetryFailed": "Auto-retry failed downloads",
     "defaultFfmpegArgs": "Default FFmpeg args",
     "defaultFfmpegArgsHint": "Applied to every newly parsed video. You can still override the value for an individual task.",
     "about": "About",

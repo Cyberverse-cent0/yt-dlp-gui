@@ -234,3 +234,49 @@ pub async fn fetch_video_info(
     )
     .await
 }
+
+/// 获取可供前端播放器直接播放的流地址（yt-dlp -g）。
+///
+/// 优先选择自带音频的视频流（progressive，单文件可直接播放），
+/// 其次 HLS 清单（m3u8，浏览器原生支持），最后退回 yt-dlp 的 best。
+/// YouTube 等将音视频分离为 DASH 流的站点不存在单条可播 URL，
+/// 前端应改用官方嵌入播放器，此命令主要服务于其他站点。
+#[tauri::command]
+pub async fn fetch_stream_url(
+    app: AppHandle,
+    url: String,
+    cookie_file: Option<String>,
+    cookie_browser: Option<String>,
+    proxy: Option<String>,
+) -> Result<String, String> {
+    let mut args = support::build_ytdlp_base_args(&app);
+    args.push("-g".to_string());
+    args.push("--no-playlist".to_string());
+    args.push("-f".to_string());
+    args.push("b[vcodec!=none][acodec!=none]/b[protocol*=m3u8]/b".to_string());
+    support::append_cookie_proxy_args(
+        &mut args,
+        cookie_file.as_deref(),
+        cookie_browser.as_deref(),
+        proxy.as_deref(),
+    );
+    args.push(url);
+
+    let output = support::run_ytdlp_capture(&app, None, args).await?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if let Some(stream_url) = stdout
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty() && line.starts_with("http"))
+    {
+        return Ok(stream_url.to_string());
+    }
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let err = support::extract_ytdlp_error(&stderr);
+    if err.is_empty() {
+        Err("err_stream_url_unavailable".to_string())
+    } else {
+        Err(err)
+    }
+}

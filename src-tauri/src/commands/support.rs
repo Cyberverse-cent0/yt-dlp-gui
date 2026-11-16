@@ -99,6 +99,30 @@ pub async fn run_ytdlp_capture(
     output.map_err(|e| format!("err_run_ytdlp:{}", e))
 }
 
+/// 构建 yt-dlp 基础参数：忽略用户配置、稳定纯文本输出、网络异常快速失败，
+/// 并附加 JS 运行时、ffmpeg、插件与 YouTube 提取器相关参数。
+/// JSON 类调用方再自行补 `-J`/`--flat-playlist` 等输出参数。
+pub fn build_ytdlp_base_args(app: &AppHandle) -> Vec<String> {
+    let mut args = vec![
+        "--ignore-config".to_string(),
+        "--color".to_string(),
+        "never".to_string(),
+        "--no-warnings".to_string(),
+        // 网络异常时快速失败：默认 retries=10、无 socket 超时，会卡住几分钟
+        "--socket-timeout".to_string(),
+        "15".to_string(),
+        "--retries".to_string(),
+        "3".to_string(),
+        "--extractor-retries".to_string(),
+        "2".to_string(),
+    ];
+    args.extend(utils::build_js_runtime_args(app));
+    args.extend(utils::build_ffmpeg_location_args(app));
+    args.extend(utils::build_plugin_args(app));
+    args.extend(utils::build_youtube_extractor_args());
+    args
+}
+
 /// 运行 yt-dlp -J 并解析 JSON 输出（用于获取视频信息、封面列表、字幕列表等）
 pub async fn run_ytdlp_json(
     app: &AppHandle,
@@ -121,27 +145,11 @@ pub async fn run_ytdlp_json_tracked(
     cookie_browser: Option<&str>,
     proxy: Option<&str>,
 ) -> Result<Value, String> {
-    let mut args = vec![
-        "-J".to_string(),
-        "--ignore-config".to_string(),
-        "--color".to_string(),
-        "never".to_string(),
-        "--no-warnings".to_string(),
-        // 网络异常时快速失败：默认 retries=10、无 socket 超时，会卡住几分钟
-        "--socket-timeout".to_string(),
-        "15".to_string(),
-        "--retries".to_string(),
-        "3".to_string(),
-        "--extractor-retries".to_string(),
-        "2".to_string(),
-    ];
+    let mut args = vec!["-J".to_string()];
+    args.extend(build_ytdlp_base_args(app));
     for a in extra_args {
         args.push(a.to_string());
     }
-    args.extend(utils::build_js_runtime_args(app));
-    args.extend(utils::build_ffmpeg_location_args(app));
-    args.extend(utils::build_plugin_args(app));
-    args.extend(utils::build_youtube_extractor_args());
     append_cookie_proxy_args(&mut args, cookie_file, cookie_browser, proxy);
     args.push(url.to_string());
 

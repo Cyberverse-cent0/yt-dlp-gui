@@ -6,6 +6,7 @@ import IconMdiMessageTextOutline from "~icons/mdi/message-text-outline";
 import IconMdiFormatListNumbered from "~icons/mdi/format-list-numbered";
 import IconMdiCommentTextMultipleOutline from "~icons/mdi/comment-text-multiple-outline";
 import IconMdiAccountBoxMultipleOutline from "~icons/mdi/account-box-multiple-outline";
+import IconMdiPlaylistPlay from "~icons/mdi/playlist-play";
 import IconMdiPuzzleOutline from "~icons/mdi/puzzle-outline";
 import IconMdiOpenInApp from "~icons/mdi/open-in-app";
 import { useI18n } from "vue-i18n";
@@ -31,6 +32,14 @@ const tools: ToolItem[] = [
     bg: "rgba(14,165,233,0.1)",
     titleKey: "channelArchive.title",
     descKey: "toolbox.channelArchiveDesc",
+  },
+  {
+    key: "playlist",
+    icon: IconMdiPlaylistPlay,
+    color: "#0d9488",
+    bg: "rgba(13,148,136,0.1)",
+    titleKey: "toolbox.playlistTitle",
+    descKey: "toolbox.playlistDesc",
   },
   {
     key: "thumbnail",

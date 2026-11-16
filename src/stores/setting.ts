@@ -158,6 +158,9 @@ export const useSettingStore = defineStore(
     /** 在任务栏显示下载进度 */
     const showTaskbarProgress = ref(true);
 
+    /** 下载失败后自动重试（每个任务最多 10 次，线性退避） */
+    const autoRetryFailed = ref(true);
+
     return {
       locale,
       themeMode,
@@ -220,6 +223,7 @@ export const useSettingStore = defineStore(
       youtubePoToken,
       youtubeVisitorData,
       showTaskbarProgress,
+      autoRetryFailed,
     };
   },
   {

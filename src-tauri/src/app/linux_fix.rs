@@ -75,3 +75,5 @@ async fn nudge_window_size(window: &WebviewWindow) {
     tokio::time::sleep(RESIZE_GAP).await;
     let _ = window.set_size(Size::Physical(size));
 }
+
+

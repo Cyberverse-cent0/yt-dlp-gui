@@ -26,6 +26,7 @@
     "confirmCancelAndDelete": "Are you sure you want to cancel this download?",
     "cancelFailed": "Failed to cancel",
     "retryFailed": "Failed to retry",
+    "autoRetryScheduled": "auto-retry {attempt} in {seconds}s",
     "removeTask": "Remove Task",
     "confirmRemoveTask": "Are you sure you want to remove this task from the list?",
     "alsoDeleteFiles": "Also delete downloaded files",

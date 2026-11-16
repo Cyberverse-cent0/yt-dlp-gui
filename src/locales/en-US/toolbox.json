@@ -95,7 +95,15 @@
     "stopTask": "Stop task",
     "taskCancelled": "Task stopped",
     "taskInterrupted": "The previous run was interrupted by app exit; you can run it again",
-    "channelArchiveDesc": "Archive all videos, shorts, and live streams with incremental sync"
+    "channelArchiveDesc": "Archive all videos, shorts, and live streams with incremental sync",
+    "playlistTitle": "Playlist Downloader",
+    "playlistDesc": "Parse a playlist or channel URL and queue selected videos for download",
+    "playlistPageDesc": "Paste a playlist or channel URL to list its videos. Pick the entries you want, then send them to the pending queue to choose formats and start downloading.",
+    "fetchPlaylist": "Fetch Playlist",
+    "playlistVideoCount": "{n} videos",
+    "selectedCount": "{n} selected",
+    "notAPlaylist": "This URL is a single video, not a playlist. You can still send it to the pending queue.",
+    "sendToPending": "Send to Pending Queue"
   },
   "plugins": {
     "title": "Plugin Manager",

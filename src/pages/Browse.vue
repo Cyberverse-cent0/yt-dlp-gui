@@ -1,26 +1,38 @@
 <script setup lang="ts">
-import { invoke } from "@tauri-apps/api/core";
+import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { useVideoStore } from "@/stores/video";
 import { usePendingStore } from "@/stores/pending";
-import { useSettingStore } from "@/stores/setting";
+import { useBrowseStore } from "@/stores/browse";
 import { formatDuration, formatViewCount } from "@/utils/format";
-import type { BrowseEntry, BrowseResults } from "@/types";
+import type { BrowseEntry } from "@/types";
 
 const { t } = useI18n();
 const router = useRouter();
 const videoStore = useVideoStore();
 const pendingStore = usePendingStore();
-const settingStore = useSettingStore();
 
-const input = ref("");
+const browseStore = useBrowseStore();
+// 搜索关键词、结果与勾选状态存于 store，导航离开再返回不丢失
+const { input, results, selectedUrls } = storeToRefs(browseStore);
+
 const loading = ref(false);
-const results = ref<BrowseResults | null>(null);
-const selectedUrls = ref<Set<string>>(new Set());
 const openingUrl = ref("");
 const addingAll = ref(false);
+const pageRef = ref<HTMLElement | null>(null);
 
 const hasSearched = computed(() => results.value !== null);
+
+onMounted(() => {
+  // 恢复上次离开时的滚动位置
+  nextTick(() => {
+    if (pageRef.value) pageRef.value.scrollTop = browseStore.scrollTop;
+  });
+});
+
+onUnmounted(() => {
+  browseStore.scrollTop = pageRef.value?.scrollTop ?? 0;
+});
 
 const toggleSelected = (entry: BrowseEntry) => {
   const next = new Set(selectedUrls.value);
@@ -38,15 +50,11 @@ const handleSearch = async () => {
   const keyword = input.value.trim();
   if (!keyword || loading.value) return;
   loading.value = true;
-  selectedUrls.value = new Set();
   try {
-    const { cookieFile, cookieBrowser } = await videoStore.getCookieArgs();
-    results.value = await invoke<BrowseResults>("fetch_browse_results", {
-      input: keyword,
-      cookieFile,
-      cookieBrowser,
-      proxy: settingStore.proxy || null,
-    });
+    await browseStore.search();
+    // 新搜索结果回到列表顶部
+    browseStore.scrollTop = 0;
+    pageRef.value?.scrollTo({ top: 0 });
   } catch (error: unknown) {
     window.$message.error(
       error instanceof Error ? error.message : String(error) || t("browse.searchFailed"),
@@ -65,19 +73,13 @@ const addEntryToPending = async (entry: BrowseEntry): Promise<boolean> => {
   return true;
 };
 
-/** 点击卡片：进入常规详情流程（拉取完整格式后进入待下载页配置） */
-const handleOpen = async (entry: BrowseEntry) => {
+/** 点击卡片：进入观看页（在线播放 + 快速下载 + 高级下载入口） */
+const handleOpen = (entry: BrowseEntry) => {
   if (openingUrl.value) return;
   openingUrl.value = entry.url;
-  try {
-    const data = await videoStore.fetchVideoInfo(entry.url);
-    if (data) {
-      pendingStore.add(data);
-      router.push({ name: "pending" });
-    }
-  } finally {
+  void router.push({ name: "watch", query: { url: entry.url } }).finally(() => {
     openingUrl.value = "";
-  }
+  });
 };
 
 /** 批量把勾选的视频加入待下载队列（顺序拉取完整信息） */
@@ -113,7 +115,7 @@ const handleClearSelection = () => {
 </script>
 
 <template>
-  <div class="browse-page">
+  <div ref="pageRef" class="browse-page">
     <n-flex vertical :size="16" class="browse-container">
       <n-flex align="center" :size="8" :wrap="false">
         <n-input

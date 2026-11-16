@@ -19,6 +19,11 @@ const router = createRouter({
       component: () => import("@/pages/Browse.vue"),
     },
     {
+      path: "/watch",
+      name: "watch",
+      component: () => import("@/pages/Watch.vue"),
+    },
+    {
       path: "/pending",
       name: "pending",
       component: Pending,
@@ -71,6 +76,11 @@ const router = createRouter({
           path: "channel",
           name: "toolbox-channel",
           component: () => import("@/pages/toolbox/ChannelArchive.vue"),
+        },
+        {
+          path: "playlist",
+          name: "toolbox-playlist",
+          component: () => import("@/pages/toolbox/Playlist.vue"),
         },
         {
           path: "browser-extension",

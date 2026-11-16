@@ -26,6 +26,7 @@
     "confirmCancelAndDelete": "确定要取消此下载任务吗？",
     "cancelFailed": "取消失败",
     "retryFailed": "重新下载失败",
+    "autoRetryScheduled": "{seconds} 秒后自动重试（{attempt}）",
     "removeTask": "移除任务",
     "confirmRemoveTask": "确定要从列表中移除该任务吗？",
     "alsoDeleteFiles": "同时删除已下载的文件",

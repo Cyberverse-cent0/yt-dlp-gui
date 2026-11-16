@@ -88,12 +88,18 @@ export const useVideoStore = defineStore("video", () => {
 
       if (info._type === "playlist" && entries.length) {
         isPlaylist = true;
-        playlistEntries = entries.map((e, i) => ({
-          id: e.id || String(i + 1),
-          title: e.title || `第 ${i + 1} P`,
-          duration: e.duration ?? null,
-          url: e.url || "",
-        }));
+        playlistEntries = entries.map((e, i) => {
+          // yt-dlp 条目字段不统一：url 可能缺失但 webpage_url 存在
+          const raw = e as PlaylistEntry & { webpage_url?: string };
+          return {
+            id: raw.id || String(i + 1),
+            title:
+              raw.title ||
+              i18n.global.t("detail.playlistTag", { n: i + 1 }),
+            duration: raw.duration ?? null,
+            url: raw.url || raw.webpage_url || "",
+          };
+        });
         const firstEntry = entries[0];
         const formats: VideoFormat[] = firstEntry?.formats || info.formats || [];
         // 合集字幕：yt-dlp -J 对 playlist 不会在 root 暴露 subtitles，

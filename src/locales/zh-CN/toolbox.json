@@ -95,7 +95,15 @@
     "stopTask": "停止任务",
     "taskCancelled": "任务已停止",
     "taskInterrupted": "上次执行被应用退出中断，可重新执行",
-    "channelArchiveDesc": "归档频道全部视频与回放，支持增量更新与本地检索"
+    "channelArchiveDesc": "归档频道全部视频与回放，支持增量更新与本地检索",
+    "playlistTitle": "播放列表下载",
+    "playlistDesc": "解析播放列表或频道链接，把选中的视频加入下载队列",
+    "playlistPageDesc": "粘贴播放列表或频道链接以列出其中的视频，勾选需要的条目后发送到待下载队列，可在其中选择格式并开始下载。",
+    "fetchPlaylist": "获取播放列表",
+    "playlistVideoCount": "{n} 个视频",
+    "selectedCount": "已选 {n} 个",
+    "notAPlaylist": "该链接是单个视频而非播放列表，仍可发送到待下载队列。",
+    "sendToPending": "发送到待下载队列"
   },
   "plugins": {
     "title": "插件管理",

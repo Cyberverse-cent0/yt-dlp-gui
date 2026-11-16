@@ -297,9 +297,20 @@ export interface VideoInfo {
   thumbnails?: ThumbnailInfo[];
   duration: number;
   uploader: string;
+  /** 频道/作者名（部分站点与 uploader 不同） */
+  channel?: string;
+  /** 频道主页 URL（YouTube 为 /channel/ 或 /@handle 形式），用于拉取相关视频 */
+  channel_url?: string;
+  uploader_url?: string;
   view_count: number;
   upload_date: string;
   description: string;
+  /** 点赞数（部分站点/提取器可能缺失） */
+  like_count?: number | null;
+  /** 评论数（仅元数据，不含评论内容） */
+  comment_count?: number | null;
+  /** 章节列表（YouTube 章节等） */
+  chapters?: Chapter[] | null;
   formats: VideoFormat[];
   subtitles: Record<string, { ext: string; url: string; name?: string }[]>;
   automatic_captions: Record<string, { ext: string; url: string; name?: string }[]>;
@@ -341,6 +352,11 @@ export interface CommentsInfo {
   title: string;
   comment_count: number | null;
   comments: VideoComment[];
+}
+
+/** 带回复树的评论节点（观看页评论区使用） */
+export interface CommentNode extends VideoComment {
+  replies: CommentNode[];
 }
 
 export interface LiveChatMessage {

@@ -27,6 +27,12 @@ interface ProgressPayload {
   status?: string;
 }
 
+/** 失败任务自动重试上限（每个任务） */
+const MAX_AUTO_RETRY_ATTEMPTS = 10;
+/** 自动重试退避：第 n 次重试等待 n*10s，封顶 60s（给网络恢复时间） */
+const AUTO_RETRY_BASE_DELAY_MS = 10_000;
+const AUTO_RETRY_MAX_DELAY_MS = 60_000;
+
 /**
  * 视频下载管理 Store
  */
@@ -73,6 +79,7 @@ export const useDownloadStore = defineStore("download", () => {
       next.speed = "";
       next.eta = "";
       await updateTask(next);
+      scheduleAutoRetry(next);
     }
   };
 
@@ -84,6 +91,66 @@ export const useDownloadStore = defineStore("download", () => {
   const canStartNow = (): boolean => {
     const settingStore = useSettingStore();
     return activeCount.value < settingStore.maxConcurrent;
+  };
+
+  /** 自动重试计数与定时器（会话内有效，重启后归零） */
+  const autoRetryAttempts = new Map<string, number>();
+  const autoRetryTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  /** 清除任务的自动重试状态（成功/取消/手动移除时调用） */
+  const clearAutoRetry = (id: string): void => {
+    autoRetryAttempts.delete(id);
+    const timer = autoRetryTimers.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      autoRetryTimers.delete(id);
+    }
+  };
+
+  /**
+   * 下载失败后按线性退避调度自动重试：
+   * 第 n 次重试等待 min(n*10s, 60s)，最多 10 次。
+   * 退避窗口给网络/环境恢复时间，yt-dlp 续传 .part 文件不丢进度。
+   */
+  const scheduleAutoRetry = (task: DownloadTask): void => {
+    const settingStore = useSettingStore();
+    if (!settingStore.autoRetryFailed || task.status === "cancelled") return;
+
+    const attempt = (autoRetryAttempts.get(task.id) ?? 0) + 1;
+    if (attempt > MAX_AUTO_RETRY_ATTEMPTS) return;
+    autoRetryAttempts.set(task.id, attempt);
+
+    const delayMs = Math.min(AUTO_RETRY_BASE_DELAY_MS * attempt, AUTO_RETRY_MAX_DELAY_MS);
+    const timer = setTimeout(() => {
+      autoRetryTimers.delete(task.id);
+      void autoRetryTask(task.id);
+    }, delayMs);
+    autoRetryTimers.set(task.id, timer);
+
+    // 把重试计划附加到错误信息，用户在任务卡上可见
+    const notice = i18n.global.t("downloads.autoRetryScheduled", {
+      attempt: `${attempt}/${MAX_AUTO_RETRY_ATTEMPTS}`,
+      seconds: Math.round(delayMs / 1000),
+    });
+    task.error = task.error ? `${task.error} · ${notice}` : notice;
+    void updateTask(task);
+  };
+
+  /** 自动重试到期：重置进度并重新排队，走正常并发队列启动 */
+  const autoRetryTask = async (id: string): Promise<void> => {
+    const task = tasks.value.find((taskItem) => taskItem.id === id);
+    if (!task || task.status !== "error") return;
+
+    task.status = "queued";
+    task.percent = 0;
+    task.speed = "";
+    task.eta = "";
+    task.downloaded = "";
+    task.total = "";
+    task.logs = [];
+    task.error = undefined;
+    await updateTask(task);
+    await tryStartNext();
   };
 
   /**
@@ -243,6 +310,7 @@ export const useDownloadStore = defineStore("download", () => {
           // 后端只落了状态/产物，内存里的 total/清空后的 logs 需要同步回库
           void updateTask(task);
         }
+        clearAutoRetry(event.payload.id);
         updateTaskbarProgress();
         tryStartNext();
       },
@@ -257,6 +325,7 @@ export const useDownloadStore = defineStore("download", () => {
         task.eta = "";
         // 错误诊断依赖日志，保留裁剪后的 logs 并落库
         void updateTask(task);
+        scheduleAutoRetry(task);
       }
       updateTaskbarProgress();
       tryStartNext();
@@ -321,6 +390,7 @@ export const useDownloadStore = defineStore("download", () => {
         // 进程可能已经提前退出
       }
     }
+    clearAutoRetry(id);
     // 无论后端是否成功标记，都以内存态为准落库，避免 cancelled 回退为 error
     await updateTask(task);
 
@@ -341,6 +411,7 @@ export const useDownloadStore = defineStore("download", () => {
     const newId = `dl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const fullParams = normalizeTaskParams(task.params);
     const oldId = task.id;
+    clearAutoRetry(oldId);
 
     // 先从 SQLite 移除旧任务记录，再写入新 ID 行，串行避免乱序留下孤儿行
     try {
@@ -373,6 +444,7 @@ export const useDownloadStore = defineStore("download", () => {
             ? error.message
             : String(error) || i18n.global.t("downloads.startFailed");
         await updateTask(task);
+        scheduleAutoRetry(task);
       }
     } else {
       task.status = "queued";
@@ -457,6 +529,7 @@ export const useDownloadStore = defineStore("download", () => {
   const removeTask = async (id: string): Promise<void> => {
     const idx = tasks.value.findIndex((taskItem) => taskItem.id === id);
     if (idx !== -1) tasks.value.splice(idx, 1);
+    clearAutoRetry(id);
     try {
       await invoke("db_delete_task", { id });
     } catch {
@@ -480,6 +553,7 @@ export const useDownloadStore = defineStore("download", () => {
   const clearCancelled = async (): Promise<void> => {
     const cancelledTasks = tasks.value.filter((task) => task.status === "cancelled");
     const ids = cancelledTasks.map((t) => t.id);
+    ids.forEach(clearAutoRetry);
     tasks.value = tasks.value.filter((task) => task.status !== "cancelled");
     if (ids.length > 0) {
       invoke("db_delete_tasks", { ids }).catch(() => {});
@@ -495,6 +569,7 @@ export const useDownloadStore = defineStore("download", () => {
   const clearFailed = async (): Promise<void> => {
     const failedTasks = tasks.value.filter((task) => task.status === "error");
     const ids = failedTasks.map((t) => t.id);
+    ids.forEach(clearAutoRetry);
     tasks.value = tasks.value.filter((task) => task.status !== "error");
     if (ids.length > 0) {
       invoke("db_delete_tasks", { ids }).catch(() => {});
@@ -512,6 +587,7 @@ export const useDownloadStore = defineStore("download", () => {
       (task) => task.status === "error" || task.status === "cancelled",
     );
     const ids = interruptedTasks.map((t) => t.id);
+    ids.forEach(clearAutoRetry);
     tasks.value = tasks.value.filter(
       (task) => task.status !== "error" && task.status !== "cancelled",
     );
