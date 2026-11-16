@@ -76,6 +76,7 @@ const handleCheckAppUpdate = async () => {
     if (update) {
       statusStore.updateVersion = update.version;
       statusStore.updateNotes = update.body || "";
+      statusStore.pendingUpdate = update;
       statusStore.showUpdateModal = true;
     } else {
       window.$message.success(t("settings.appIsLatest"));

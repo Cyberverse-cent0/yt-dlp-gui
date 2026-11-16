@@ -22,8 +22,14 @@ const handleUpdate = async () => {
   downloading.value = true;
   progress.value = 0;
   try {
-    const update = await check();
-    if (!update) return;
+    // 优先复用检查时拿到的 Update 对象；为空（如旧版本状态）时现场再查一次
+    const update = statusStore.pendingUpdate ?? (await check());
+    if (!update) {
+      window.$message.info(t("settings.appIsLatest"));
+      statusStore.showUpdateModal = false;
+      return;
+    }
+    statusStore.pendingUpdate = update;
 
     await update.downloadAndInstall((event) => {
       if (event.event === "Started") {
@@ -48,6 +54,7 @@ const handleUpdate = async () => {
 
 const handleClose = () => {
   if (!downloading.value) {
+    statusStore.pendingUpdate = null;
     statusStore.showUpdateModal = false;
   }
 };

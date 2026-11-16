@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import type { Update } from "@tauri-apps/plugin-updater";
 import type { ToolUpdateCheck } from "@/types";
 
 /**
@@ -12,6 +13,8 @@ export const useStatusStore = defineStore("status", () => {
   const showUpdateModal = ref(false);
   const updateVersion = ref("");
   const updateNotes = ref("");
+  /** 检查到的待安装更新对象，弹窗直接复用，避免二次请求 latest.json */
+  const pendingUpdate = ref<Update | null>(null);
 
   /** yt-dlp 未安装弹窗 */
   const showYtdlpSetupModal = ref(false);
@@ -38,6 +41,7 @@ export const useStatusStore = defineStore("status", () => {
     showUpdateModal,
     updateVersion,
     updateNotes,
+    pendingUpdate,
     showYtdlpSetupModal,
     showDenoSetupModal,
     showFfmpegSetupModal,

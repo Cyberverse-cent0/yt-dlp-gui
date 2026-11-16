@@ -51,6 +51,7 @@ export const useAppBootstrap = () => {
       if (updateResult) {
         statusStore.updateVersion = updateResult.version;
         statusStore.updateNotes = updateResult.body || "";
+        statusStore.pendingUpdate = updateResult;
         statusStore.showUpdateModal = true;
       }
     } catch {
